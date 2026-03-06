@@ -73,5 +73,5 @@ def export_to_dwg(data, filename):
 
     # Save as Binary DXF (often interpreted as DWG-ready by many viewers)
     # Note: True DWG requires a native converter, but this is the maximum possible.
-    doc.saveas(filename)
-    return filename
+    doc.saveas(filename.replace(".dxf", ".dwg"))
+    return filename.replace(".dxf", ".dwg")

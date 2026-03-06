@@ -45,7 +45,7 @@ class ArchHandler(SimpleHTTPRequestHandler):
             if not os.path.exists("exports"): os.makedirs("exports")
             
             ts = int(datetime.datetime.now().timestamp())
-            filename = f"exports/Finch_Plan_{ts}.dxf"
+            filename = f"exports/Finch_Plan_{ts}.dwg"
             export_to_dwg(data, filename)
             
             # In a real app we'd serve the file, but here we return the filename
