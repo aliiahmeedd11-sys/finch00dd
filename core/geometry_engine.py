@@ -475,31 +475,36 @@ class GeometryPipeline:
                         poly = [v1_in, v2_in, v2_out, v1_out]
                         lbl   = self.TYPE_LABELS.get(unit_type, "Room")
                         color = self.TYPE_COLORS.get(unit_type, (180, 200, 255))
-                        area  = abs(sum(
-                            poly[i][0]*poly[(i+1)%4][1] - poly[(i+1)%4][0]*poly[i][1]
+
+                        # Convert Point objects → tuples FIRST (Points don't support subscript)
+                        bnd = [pt.as_tuple() if hasattr(pt, "as_tuple") else tuple(pt) for pt in poly]
+                        # Shoelace area on tuples
+                        area = abs(sum(
+                            bnd[i][0] * bnd[(i+1) % 4][1] - bnd[(i+1) % 4][0] * bnd[i][1]
                             for i in range(4)
                         )) / 2.0
 
                         # Get config for balcony from unit_mix list
                         cfg = next((c for c in self.unit_mix if c.get("type") == unit_type), {})
 
-                        obs_list = self.static_obstacles + [r["boundary"] for r in self.rooms]
+                        obs_list = list(self.static_obstacles) + [r["boundary"] for r in self.rooms]
                         for c in self.cores:
-                            if "stair" in c and c["stair"]:    obs_list.append(c["stair"]["boundary"])
+                            if "stair" in c and c["stair"]:       obs_list.append(c["stair"]["boundary"])
                             if "elevator" in c and c["elevator"]: obs_list.append(c["elevator"]["boundary"])
 
-                        has_collision = any(
-                            Article82_Validator._sat_collision(
-                                [pt.as_tuple() if hasattr(pt, "as_tuple") else pt for pt in poly],
-                                obs if isinstance(obs[0], (list, tuple)) else [p.as_tuple() for p in obs]
-                            )
-                            for obs in obs_list
-                        )
+                        has_collision = False
+                        for obs in obs_list:
+                            if not obs:
+                                continue
+                            obs_as_tuples = obs if isinstance(obs[0], (list, tuple)) else [p.as_tuple() for p in obs]
+                            if Article82_Validator._sat_collision(list(bnd), obs_as_tuples):
+                                has_collision = True
+                                break
 
                         if not has_collision:
                             self.rooms.append({
                                 "label": lbl,
-                                "boundary": [pt.as_tuple() if hasattr(pt, "as_tuple") else list(pt) for pt in poly],
+                                "boundary": [list(pt) for pt in bnd],
                                 "area": round(area, 1),
                                 "min_width": round(use_w, 2),
                                 "is_landlocked": False,
