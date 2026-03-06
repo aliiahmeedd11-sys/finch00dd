@@ -29,17 +29,12 @@ function alignSpineToStructGrid(spine, module) {
 
 // --- Sliders ---
 const slCW = document.getElementById("corridor-width"),
-  slRW = document.getElementById("room-width"),
+  slRW = document.getElementById("room-width"), // hidden, value = MODULE (3.6m)
   slRD = document.getElementById("room-depth");
 const vCW = document.getElementById("cw-val"),
-  vRW = document.getElementById("rw-val"),
   vRD = document.getElementById("rd-val");
 slCW.addEventListener("input", () => {
   vCW.textContent = (+slCW.value).toFixed(2) + " m";
-  generate();
-});
-slRW.addEventListener("input", () => {
-  vRW.textContent = (+slRW.value).toFixed(2) + " m";
   generate();
 });
 slRD.addEventListener("input", () => {

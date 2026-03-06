@@ -1,59 +1,146 @@
 /* controls.css - Finch Parametric Architecture Engine */
 
 .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
 }
 
 .stat-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
 }
 
 .stat-card .stat-value {
-    font-family: var(--font-mono);
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--accent)
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
 }
 
 .stat-card .stat-label {
-    font-size: 10px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-    text-transform: uppercase;
-    letter-spacing: .5px
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .draw-hint {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 8px;
-    padding: 8px;
-    background: var(--bg-primary);
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    line-height: 1.5;
-    display: none
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  line-height: 1.5;
+  display: none;
 }
 
 .draw-hint.visible {
-    display: block
+  display: block;
 }
 
 .draw-hint b {
-    color: var(--accent)
+  color: var(--accent);
 }
 
 .spine-pts {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-muted);
-    margin-top: 6px;
-    max-height: 80px;
-    overflow-y: auto
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+/* === Module System Panel === */
+.module-info-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.module-badge {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.module-badge strong {
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.module-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.module-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.module-table td {
+  padding: 5px 6px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.module-table td:last-child {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.module-table tr:last-child td {
+  border-bottom: none;
+}
+
+.module-table .dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Color classes for module type dots */
+.dot-studio {
+  background: #facc15;
+}
+.dot-bed1 {
+  background: #4ade80;
+}
+.dot-bed2 {
+  background: #60a5fa;
+}
+.dot-bed3 {
+  background: #f472b6;
+}
+
+/* Modifier for slider groups that need top spacing */
+.slider-group-mt {
+    margin-top: 10px;
 }
