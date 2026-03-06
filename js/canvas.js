@@ -282,22 +282,21 @@ function draw() {
 
       // 🏠 Render Balcony
       if (S.showBalconies && r.balcony) {
-        ctx.fillStyle = `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},0.15)`;
+        ctx.fillStyle =
+          r.balcony_fill || `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},0.15)`;
         ctx.strokeStyle = `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},0.8)`;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.0;
         dPoly(r.balcony, true, true);
 
-        // Balustrade Detail
+        // Solid Divider Line (The "Wall/Window" between room and balcony)
         const b1 = toScreen(r.balcony[1]),
           b2 = toScreen(r.balcony[2]);
-        ctx.strokeStyle = "#ffffff66";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = "rgba(255,255,255,0.4)";
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(b1[0], b1[1]);
         ctx.lineTo(b2[0], b2[1]);
         ctx.stroke();
-        ctx.setLineDash([]);
         // This line is inferred to be part of the S object's initialization.
         // For a real file, you'd find the 'const S = { ... }' definition and modify it.
         // const S = { data: null, zoom: 10, panX: 0, panY: 0, showRooms: true, showSpine: true, showCores: true, showDucts: true, showBalconies: true, showLabels: true, showDims: false, showCirc: false, showGrid: true, };

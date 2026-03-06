@@ -699,13 +699,33 @@ class GeometryPipeline:
                 bp2 = (p2[0] - vx*off_en, p2[1] - vy*off_en)
                 bp1 = (bp2[0] - vx*(length - off_st - off_en), bp2[1] - vy*(length - off_st - off_en))
             
-            # --- INTERNAL BALCONY FIX ---
-            # Offset INWARDS (opposite of normal nx)
+            # --- INTERNAL BALCONY (SUBDIVISION) ---
+            # The balcony is subtracted from the room's existing boundary.
             b_in1 = (bp1[0] - nx*blen, bp1[1] - ny*blen)
             b_in2 = (bp2[0] - nx*blen, bp2[1] - ny*blen)
             
-            # Balcony polygon is formed by the exterior edge and the inner divider line
-            r["balcony"] = [list(bp1), list(b_in1), list(b_in2), list(bp2)]
+            # The balcony polygon
+            balc_poly = [list(bp1), list(b_in1), list(b_in2), list(bp2)]
+            r["balcony"] = balc_poly
+            
+            # For "full" alignment (most common), we simply replace the exterior points
+            # in the room boundary with the inner balcony points.
+            new_bnd = []
+            for pt in bnd:
+                # If room point is exactly one of the exterior edge points, swap it for the inner one
+                if math.hypot(pt[0]-bp1[0], pt[1]-bp1[1]) < 0.01:
+                    new_bnd.append(list(b_in1))
+                elif math.hypot(pt[0]-bp2[0], pt[1]-bp2[1]) < 0.01:
+                    new_bnd.append(list(b_in2))
+                else:
+                    new_bnd.append(list(pt))
+            
+            # Update room to the remaining inner area
+            r["boundary"] = new_bnd
+            # Recompute area
+            r["area"] = round(abs(sum(new_bnd[i][0]*new_bnd[(i+1)%len(new_bnd)][1] - new_bnd[(i+1)%len(new_bnd)][0]*new_bnd[i][1] for i in range(len(new_bnd))))/2.0, 1)
+            # Add a distinct fill for the balcony to make it "visible"
+            r["balcony_fill"] = "rgba(40, 45, 55, 0.4)"
 
     def _dist_point_to_seg(self, p, a, b):
         px, py = p
