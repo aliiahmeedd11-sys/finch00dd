@@ -273,9 +273,16 @@ class GeometryPipeline:
             place_core(p, d, f"Service Core {len(self.cores)+1}", is_straight=False, turn_left=is_left_turn)
 
         # 2. If it is a straight line, fallback to periodic placement
+        # === STRUCTURAL MODULE SNAPPING ===
+        # Ensure cores are placed at multiples of the 3.6m module
         if not self.cores:
+            module_step = self.module or 3.6
+            step = round(self.core_spacing / module_step) * module_step
+            if step < module_step: step = module_step
+
             total_len = self._polyline_length(pts)
-            spacing = max(5.0, float(self.core_spacing))
+            if total_len < 5.0: return
+            spacing = max(5.0, float(step))
             s = 0.0
             while s <= total_len + 1e-6:
                 p, d = self._point_and_dir_at_distance(pts, s + 0.01)
@@ -449,23 +456,28 @@ class GeometryPipeline:
                     seq_idx  = 0
                     curr_pos = span_start
 
-                    while curr_pos < span_end - self.room_width * 0.5:
+                    while curr_pos < span_end - 0.1:
                         remaining = span_end - curr_pos
 
                         # Pick the next unit type from the cycle
                         unit_type = type_seq[seq_idx % len(type_seq)]
-                        seq_idx += 1
                         unit_w = self.unit_widths.get(unit_type, self.room_width)
+                        
+                        # Gap Closing: If the remaining space is small, stretch this unit to fill it
+                        # Or if we have a little more than 1 module left, just make a Studio.
+                        if remaining < unit_w + (self.room_width * 0.5):
+                           # If what's left is less than 1.5 modules, this is our LAST room in the span
+                           use_w = remaining
+                           # Use the largest type that fits as the label
+                           if use_w < self.room_width * 1.5: unit_type = "studio"
+                           elif use_w < self.room_width * 2.5: unit_type = "bed1"
+                           elif use_w < self.room_width * 3.5: unit_type = "bed2"
+                           else: unit_type = "bed3"
+                        else:
+                           use_w = unit_w
+                           seq_idx += 1
 
-                        # If the full module doesn't fit, fall back to studio (1 module)
-                        if remaining < unit_w * 0.85:
-                            unit_w = self.room_width  # 1 module fallback
-                            unit_type = "studio"
-                        if remaining < unit_w * 0.85:
-                            break   # Not even 1 module fits — stop
-
-                        # Clamp to remaining span (shouldn't exceed)
-                        use_w = min(unit_w, remaining)
+                        if use_w < self.room_width * 0.5: break # sanity check
 
                         t1 = curr_pos / L_seg
                         t2 = (curr_pos + use_w) / L_seg
