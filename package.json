@@ -1,0 +1,16 @@
+{
+  "name": "finch-engine",
+  "version": "1.0.0",
+  "description": "Parametric Architecture Engine",
+  "main": "app.py",
+  "scripts": {
+    "dev": "python app.py",
+    "lint": "eslint js/**/*.js",
+    "build": "npm run lint"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^8.57.0"
+  }
+}

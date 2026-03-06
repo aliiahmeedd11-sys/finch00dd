@@ -1,0 +1,82 @@
+/* context-menu.css - Finch Parametric Architecture Engine */
+
+.context-menu {
+    position: fixed;
+    z-index: 2000;
+    background: #1a1b1e;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7);
+    padding: 8px 0;
+    min-width: 180px;
+    display: none;
+    overflow: hidden;
+    animation: contextPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+@keyframes contextPop {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.context-menu-title {
+    padding: 10px 16px 6px;
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 4px;
+}
+
+.context-menu-item {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.context-menu-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding-left: 20px;
+}
+
+.context-menu-item.danger {
+    color: #ff6b6b;
+}
+
+.context-menu-item.danger:hover {
+    background: rgba(255, 107, 107, 0.15);
+    color: #ff5252;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 6px 0;
+    opacity: 0.5;
+}
+
+.type-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}

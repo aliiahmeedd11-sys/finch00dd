@@ -1,0 +1,59 @@
+/* controls.css - Finch Parametric Architecture Engine */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px
+}
+
+.stat-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center
+}
+
+.stat-card .stat-value {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent)
+}
+
+.stat-card .stat-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: .5px
+}
+
+.draw-hint {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding: 8px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    line-height: 1.5;
+    display: none
+}
+
+.draw-hint.visible {
+    display: block
+}
+
+.draw-hint b {
+    color: var(--accent)
+}
+
+.spine-pts {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    max-height: 80px;
+    overflow-y: auto
+}

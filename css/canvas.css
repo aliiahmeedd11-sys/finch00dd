@@ -1,0 +1,114 @@
+/* canvas.css - Finch Parametric Architecture Engine */
+
+#canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: var(--bg-primary);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+#canvas-area canvas {
+    flex: 1;
+    display: block
+}
+
+.canvas-toolbar {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    background: var(--bg-card);
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 8px 12px;
+    z-index: 10;
+    box-shadow: var(--shadow-soft);
+}
+
+.canvas-toolbar button {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    transition: all .15s
+}
+
+.canvas-toolbar button:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary)
+}
+
+.canvas-toolbar button.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-glow)
+}
+
+.mode-badge {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 8px;
+    z-index: 10;
+    display: none;
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    border: 1px solid;
+    box-shadow: var(--shadow-soft);
+}
+
+.mode-badge.draw {
+    display: block;
+    background: rgba(63, 185, 80, .15);
+    color: var(--success);
+    border-color: var(--success)
+}
+
+.zoom-indicator {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+}
+
+.cursor-coords {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    -webkit-backdrop-filter: var(--blur);
+    backdrop-filter: var(--blur);
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+}

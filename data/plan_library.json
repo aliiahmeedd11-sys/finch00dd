@@ -1,0 +1,397 @@
+{
+    "_meta": {
+        "description": "Finch Plan Library — Architectural knowledge base learned from professional residential plans",
+        "version": "2.0",
+        "updated": "2026-02-21",
+        "source": "14 professional residential floor plans studied from plans-learn/",
+        "core_rule": "ZERO OVERLAP — No room, corridor, shaft, or any element may ever overlap another"
+    },
+    "learned_patterns": {
+        "_summary": "14 plans studied. These are the universal patterns found across ALL of them.",
+        "P1_spine_is_corridor": {
+            "rule": "The spine IS the corridor. It runs through the center of the building as the main circulation path.",
+            "detail": "In every plan, the corridor (black/grey hatched zone) is the backbone. Rooms are arranged on BOTH sides of it. The corridor never overlaps with any room.",
+            "plans_observed": "ALL 14"
+        },
+        "P2_double_loaded_corridor": {
+            "rule": "Double-loaded corridor is the dominant typology — rooms on BOTH sides of the corridor.",
+            "detail": "12 of 14 plans use double-loaded corridors. The remaining 2 use single-loaded at building edges. This maximizes Net-to-Gross ratio.",
+            "efficiency": "Net/Gross typically 70-82%",
+            "plans_observed": "12/14 double, 2/14 single at edges"
+        },
+        "P3_core_placement": {
+            "rule": "Staircase + Elevator cores are placed at JUNCTIONS or every 25m along the corridor.",
+            "detail": "Cores appear at: (a) corridor intersections/turns, (b) ends of corridor wings, (c) center of long runs. Multiple cores per building for fire code (max 25m travel distance).",
+            "core_composition": "Each core = 1 staircase + 1-2 elevators + MEP shaft + garbage chute",
+            "plans_observed": "ALL 14"
+        },
+        "P4_zero_overlap": {
+            "rule": "ABSOLUTE ZERO OVERLAP between any elements. Every polygon boundary must be exclusive.",
+            "detail": "In professional plans: rooms share WALLS but never share AREA. Corridors border rooms but never penetrate them. Cores are fully enclosed zones. This is the #1 rule.",
+            "plans_observed": "ALL 14 — no exceptions"
+        },
+        "P5_outline_first": {
+            "rule": "The building OUTLINE (boundary) is defined first and is FIXED. Everything fits inside it.",
+            "detail": "The outline follows the plot shape, setback lines, and building regulations. The internal layout (corridor, rooms, cores) must fit entirely within this boundary. The outline cannot be changed by the room generator.",
+            "plans_observed": "ALL 14"
+        },
+        "P6_angular_spines": {
+            "rule": "Spines can have ANY angle — not just 90°. Plans use 30°, 45°, 60°, 120°, 135° angles.",
+            "detail": "The X-shape student housing (Plan 2), the zigzag (Plan 7), and the V-shapes (Plans 10,12) all use non-orthogonal corridors. Rooms are always perpendicular to the LOCAL corridor direction.",
+            "key_insight": "Room walls are perpendicular to corridor direction, NOT to global XY axes",
+            "plans_observed": "8/14 have non-90° angles"
+        },
+        "P7_room_perpendicular_to_corridor": {
+            "rule": "Room partitions are always PERPENDICULAR to the corridor segment they face.",
+            "detail": "Even when the corridor changes direction, room walls rotate to remain perpendicular to the local corridor direction. This prevents irregular/trapezoidal rooms.",
+            "plans_observed": "ALL 14"
+        },
+        "P8_junction_treatment": {
+            "rule": "At corridor junctions/turns, special zones are created — never overlapping rooms.",
+            "detail": "Junction strategies: (a) Core/stairwell placed at junction, (b) Widened lobby/landing area, (c) Triangular/trapezoidal special rooms (utility/storage), (d) Open void/courtyard. Rooms are NEVER allowed to overlap at junctions.",
+            "plans_observed": "ALL 14"
+        },
+        "P9_unit_types": {
+            "rule": "Plans use 2-4 repeating unit types that tile along the corridor.",
+            "detail": "Common types: Studio (30-45m²), 1BR (45-60m²), 2BR (60-85m²), 3BR (85-110m²). Units are mirrored across the corridor for structural efficiency.",
+            "plans_observed": "Plans 12,13 show explicit unit types and areas"
+        },
+        "P10_service_zone": {
+            "rule": "Wet rooms (kitchen, bathroom) face the corridor. Living/bedrooms face the exterior.",
+            "detail": "This pattern serves two purposes: (1) Plumbing runs are shorter and grouped along corridor walls, (2) Living spaces get natural light from the facade. The service zone (kitchen/bath/entry) acts as a buffer between corridor and private rooms.",
+            "plans_observed": "10/14"
+        },
+        "P11_facade_access": {
+            "rule": "Every habitable room MUST have at least one exterior wall for natural light/ventilation.",
+            "detail": "Rooms are arranged so their long wall faces the building exterior. Interior rooms (no exterior wall) are only acceptable for corridors, cores, storage, and MEP shafts.",
+            "plans_observed": "ALL 14"
+        },
+        "P12_structural_grid": {
+            "rule": "Room widths align to a structural grid module (typically 3.0m - 4.5m).",
+            "detail": "Consistent column spacing allows efficient structure. Room partition walls align with or subdivide the grid module. Plan 9 (BIM project) shows explicit grid axes.",
+            "grid_modules_observed": [
+                "3.0m",
+                "3.3m",
+                "3.6m",
+                "4.0m",
+                "4.5m"
+            ],
+            "plans_observed": "9/14 show visible grid"
+        },
+        "P13_corridor_width": {
+            "rule": "Main corridor width: 1.50m - 2.40m. Never less than 1.20m.",
+            "detail": "Double-loaded corridors typically 1.80-2.40m. Single-loaded or secondary corridors 1.20-1.50m. Widened at core areas (2.40-3.60m).",
+            "plans_observed": "ALL 14"
+        },
+        "P14_building_shapes": {
+            "rule": "Common building shapes follow site geometry.",
+            "shapes_observed": [
+                {
+                    "type": "I-shape (linear)",
+                    "plans": [
+                        2,
+                        3,
+                        7,
+                        8
+                    ],
+                    "notes": "Narrow plots, max light"
+                },
+                {
+                    "type": "L-shape",
+                    "plans": [
+                        4,
+                        5,
+                        9,
+                        14
+                    ],
+                    "notes": "Corner plots, courtyard potential"
+                },
+                {
+                    "type": "U-shape",
+                    "plans": [
+                        1,
+                        6
+                    ],
+                    "notes": "Central courtyard, ventilation"
+                },
+                {
+                    "type": "V/Z-shape (angular)",
+                    "plans": [
+                        3,
+                        10,
+                        12
+                    ],
+                    "notes": "Irregular plots, dynamic form"
+                },
+                {
+                    "type": "X-shape (crossing)",
+                    "plans": [
+                        2
+                    ],
+                    "notes": "Campus, max access"
+                },
+                {
+                    "type": "T-shape",
+                    "plans": [
+                        5,
+                        11
+                    ],
+                    "notes": "Wing separation, privacy"
+                },
+                {
+                    "type": "Block (compact)",
+                    "plans": [
+                        1,
+                        13
+                    ],
+                    "notes": "Urban infill, efficiency"
+                }
+            ]
+        }
+    },
+    "design_rules": {
+        "_note": "Hard constraints extracted from all 14 plans — the engine MUST enforce these",
+        "zero_overlap": true,
+        "rooms_perpendicular_to_corridor": true,
+        "every_room_has_exterior_wall": true,
+        "core_at_junctions": true,
+        "core_max_spacing_m": 25,
+        "corridor_width_min_m": 1.20,
+        "corridor_width_preferred_m": 1.80,
+        "corridor_width_max_m": 2.40,
+        "net_gross_min_percent": 70,
+        "net_gross_target_percent": 80,
+        "circulation_max_percent": 20,
+        "min_room_area_m2": 9.0,
+        "min_room_width_m": 2.70,
+        "room_width_range_m": [
+            3.0,
+            5.0
+        ],
+        "room_depth_range_m": [
+            4.0,
+            6.0
+        ],
+        "structural_grid_modules_m": [
+            3.0,
+            3.3,
+            3.6,
+            4.0,
+            4.5
+        ],
+        "unit_types": {
+            "studio": {
+                "area_range": [
+                    30,
+                    45
+                ],
+                "bedrooms": 0
+            },
+            "1br": {
+                "area_range": [
+                    45,
+                    60
+                ],
+                "bedrooms": 1
+            },
+            "2br": {
+                "area_range": [
+                    60,
+                    85
+                ],
+                "bedrooms": 2
+            },
+            "3br": {
+                "area_range": [
+                    85,
+                    110
+                ],
+                "bedrooms": 3
+            }
+        }
+    },
+    "plans_catalog": [
+        {
+            "id": "plan-01",
+            "file": "074a09e07c6e6dd0249fb8ecc6aecfca.jpg",
+            "type": "Multi-block residential complex",
+            "shape": "Multiple L/U blocks with portals",
+            "features": [
+                "multiple cores (Portal A-E)",
+                "courtyard spaces",
+                "double-loaded corridors",
+                "modular units"
+            ],
+            "lessons": "Large-scale: multiple independent blocks sharing common ground. Each block has its own core."
+        },
+        {
+            "id": "plan-02",
+            "file": "2940d1a17f7af6cf3c418c37a2684dc8.jpg",
+            "type": "Student housing X-shape",
+            "shape": "X-crossing with 4 wings",
+            "features": [
+                "X-junction with social lounge",
+                "student rooms on all 4 wings",
+                "breezeway",
+                "study lounges at ends"
+            ],
+            "lessons": "Non-orthogonal crossing works when junction becomes a FEATURE (social space). Rooms remain perpendicular to each wing direction."
+        },
+        {
+            "id": "plan-03",
+            "file": "3947c4c4de16f90e23f7e80af5a34a67.jpg",
+            "type": "Angular linear block",
+            "shape": "Bent linear / slight V",
+            "features": [
+                "units on both sides",
+                "multiple stair cores",
+                "gentle angle change"
+            ],
+            "lessons": "Even with slight angular change, rooms remain rectangular. The angle is absorbed at the junction zone by adjusting room depths."
+        },
+        {
+            "id": "plan-04",
+            "file": "410f45efc771c827abf993d39a86c3e4.jpg",
+            "type": "W-shape angular hotel/residence",
+            "shape": "W / butterfly with obtuse angles",
+            "features": [
+                "rooms perpendicular to local corridor",
+                "angular junction handled by corridor widening",
+                "every room has exterior facade"
+            ],
+            "lessons": "CRITICAL: At angular junctions, the corridor WIDENS to create a transition zone. Rooms never overlap — they end before the junction."
+        },
+        {
+            "id": "plan-05",
+            "file": "55016a6ea29c6f7437572cd853c21b25.jpg",
+            "type": "Large D-shape urban block",
+            "shape": "D / rectangular with angled wings",
+            "features": [
+                "thick black walls = corridor+core",
+                "double-loaded on all segments",
+                "internal courtyard",
+                "multiple stair cores at corners"
+            ],
+            "lessons": "The most informative plan for our engine. Black = corridor+structure. Rooms fill between corridor and façade. Cores at every junction."
+        },
+        {
+            "id": "plan-06",
+            "file": "702b017aa83212510187b266bdc85c5b.jpg",
+            "type": "Urban campus with courtyards",
+            "shape": "Multiple L-blocks around courtyards",
+            "features": [
+                "structural grid visible",
+                "landscape courtyards",
+                "separated wings"
+            ],
+            "lessons": "Breaking a large program into multiple blocks with courtyards gives better light/ventilation than one massive block."
+        },
+        {
+            "id": "plan-07",
+            "file": "78d4e5f68559404e594f17c1cb45a369.jpg",
+            "type": "Zigzag housing on slope",
+            "shape": "Zigzag / terraced",
+            "features": [
+                "angular segments follow terrain",
+                "rooms perpendicular to each segment",
+                "single-loaded outer side"
+            ],
+            "lessons": "On irregular terrain, spine follows slope. Single-loaded corridor gives ALL rooms the view side."
+        },
+        {
+            "id": "plan-08",
+            "file": "85432ce9cf55bcde01ce7c57c6921fc2.jpg",
+            "type": "Angular L-shape with scale bar",
+            "shape": "Bent L with obtuse angle",
+            "features": [
+                "hatched junction = core zone",
+                "rooms on both sides",
+                "20m scale reference"
+            ],
+            "lessons": "The junction angle ~120° is handled by placing a hatched core/transition zone. Rooms stop before the junction."
+        },
+        {
+            "id": "plan-09",
+            "file": "8864bf0cdf5608d11541377347bb9474.jpg",
+            "type": "L-shape residential with courtyard",
+            "shape": "L-shape, two wings",
+            "features": [
+                "staircase at junction",
+                "double-loaded main wing",
+                "courtyard between wings"
+            ],
+            "lessons": "Core at L-junction is standard practice. Courtyard provides light to inner rooms."
+        },
+        {
+            "id": "plan-10",
+            "file": "9108942a60f2ad818a0707267b98314a.jpg",
+            "type": "BIM university residence (detailed)",
+            "shape": "Irregular polygon following site",
+            "features": [
+                "full BIM documentation",
+                "room schedules",
+                "structural axes S-1 to S-8",
+                "area tables"
+            ],
+            "lessons": "Production-quality BIM plan. Room areas: 2.08-7.80m² (individual rooms within apartments). Full structural grid with named axes."
+        },
+        {
+            "id": "plan-11",
+            "file": "92865dcc46493753e43e2c6c77b49d64.jpg",
+            "type": "V-shape angular blocks",
+            "shape": "Three angular blocks in V/Z arrangement",
+            "features": [
+                "30m scale bar",
+                "north arrow",
+                "dashed = above stories",
+                "multiple cores per block"
+            ],
+            "lessons": "Angular blocks work when each wing is treated independently. Junction zones are cores or transition spaces."
+        },
+        {
+            "id": "plan-12",
+            "file": "c4b9576adcd58367586ecda029f2c8aa.jpg",
+            "type": "Block A — color-coded units with areas",
+            "shape": "T-shape with offset wing",
+            "features": [
+                "labeled unit types (1B,2A,2B,2C,2E,3A)",
+                "area labels",
+                "yellow/brown=2BR+Studio 84.4m²",
+                "blue=2BR 54.46m²",
+                "central core with elevators"
+            ],
+            "efficiency": "Implied ~80% N/G ratio",
+            "lessons": "GOLD STANDARD reference. Shows unit variety (1PN to 3PN), area efficiency, color-coded typology. Core = stairs+2 elevators centrally placed."
+        },
+        {
+            "id": "plan-13",
+            "file": "cd67f8a6b258fb97be1bfdee47d32253.jpg",
+            "type": "Block B — detailed efficiency plan",
+            "shape": "L-shape / irregular with offset blocks",
+            "features": [
+                "BUA = 1,115.22m²",
+                "sellable = 912.1m²",
+                "efficiency = 81.8%",
+                "14 units/floor",
+                "5x 2BR+Studio (84.4m²)",
+                "9x 2BR (54.46m²)",
+                "core = PCCC+P.DEM+KT DIEN+P.RAC+KT NUOC"
+            ],
+            "efficiency": "81.8% — benchmark!",
+            "lessons": "THE efficiency benchmark. 81.8% sellable ratio. Core contains: fire control (PCCC), buffer (P.DEM), electrical (KT DIEN), garbage (P.RAC), water (KT NUOC). This is a complete service core."
+        },
+        {
+            "id": "plan-14",
+            "file": "eec86b8331dbc8a481e2465ca99e1dc3.jpg",
+            "type": "T/L-shape with central corridor",
+            "shape": "T-shape — horizontal wing + vertical wing",
+            "features": [
+                "grey corridor clearly visible",
+                "core at junction",
+                "second core mid-wing",
+                "double-loaded both wings"
+            ],
+            "lessons": "Very clear corridor visibility. Two cores: one at T-junction, one mid-way along vertical wing (fire code max 25m)."
+        }
+    ]
+}

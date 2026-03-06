@@ -1,0 +1,45 @@
+/* variables.css - Finch Parametric Architecture Engine */
+
+:root {
+    /* Premium Dark Theme */
+    --bg-primary: #0A0A0C;
+    --bg-secondary: rgba(20, 20, 22, 0.65);
+    --bg-tertiary: rgba(35, 35, 40, 0.7);
+    --bg-card: rgba(25, 25, 30, 0.5);
+    --bg-glass: rgba(12, 12, 15, 0.75);
+    /* Accents */
+    --accent: #00F0FF;
+    --accent-glow: rgba(0, 240, 255, 0.3);
+    --accent-gradient: linear-gradient(135deg, #00F0FF, #0077FF);
+    /* Status */
+    --success: #00E676;
+    --warning: #FFD600;
+    --danger: #FF1744;
+    --critical: #D50000;
+    /* Text */
+    --text-primary: #FFFFFF;
+    --text-secondary: #A0AAB5;
+    --text-muted: #5C6773;
+    /* Structural */
+    --border: rgba(255, 255, 255, 0.08);
+    --radius: 12px;
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --blur: blur(24px);
+    --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --transition: 0.3s var(--ease);
+
+    /* Urban Metrics Colors */
+    --color-gba: #00F0FF;
+    --color-gfa: #FFFFFF;
+    --color-nsa: #A0AAB5;
+    --color-carpark: #5C6773;
+    --color-core: #2D5BFF;
+    --color-2bed: #FF7E67;
+    --color-1bed: #FF66B2;
+    --color-corridor: #E8E2D1;
+    --color-balcony: #F5F1E6;
+    --color-studio: #FFA726;
+    --color-3bed: #9575CD;
+}

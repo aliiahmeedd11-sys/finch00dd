@@ -1,0 +1,1858 @@
+﻿ï»¿
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finch Ã¢â¬â Parametric Architecture Engine</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #1c2333;
+            --bg-card: #21283690;
+            --accent: #58a6ff;
+            --accent-glow: #58a6ff33;
+            --success: #3fb950;
+            --warning: #d29922;
+            --danger: #f85149;
+            --critical: #da3633;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #484f58;
+            --border: #30363d;
+            --radius: 10px;
+            --font-sans: 'Inter', system-ui, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        #controls-panel {
+            width: 280px;
+            min-width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto
+        }
+
+        #controls-panel::-webkit-scrollbar {
+            width: 6px
+        }
+
+        #controls-panel::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary))
+        }
+
+        .panel-header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent), #a371f7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .panel-header .subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px
+        }
+
+        .section {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border)
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-secondary);
+            margin-bottom: 12px
+        }
+
+        .slider-group {
+            margin-bottom: 14px
+        }
+
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px
+        }
+
+        .slider-group label .val {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent);
+            background: var(--accent-glow);
+            padding: 2px 8px;
+            border-radius: 4px
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            outline: none
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px var(--accent-glow)
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        .preset-btn {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 500;
+            padding: 10px 8px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--font-sans)
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            transform: translateY(-1px)
+        }
+
+        .preset-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            box-shadow: 0 0 12px var(--accent-glow)
+        }
+
+        .preset-btn .icon {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: var(--font-sans);
+            letter-spacing: .3px;
+            margin-top: 8px
+        }
+
+        .btn-action:hover {
+            filter: brightness(1.15);
+            transform: translateY(-1px)
+        }
+
+        .btn-action:active {
+            transform: translateY(0)
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, var(--accent), #a371f7)
+        }
+
+        .btn-draw {
+            background: linear-gradient(135deg, #3fb950, #2ea043)
+        }
+
+        .btn-draw.drawing {
+            background: linear-gradient(135deg, var(--danger), #da3633);
+            animation: pulse 1.5s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(248, 81, 73, .4)
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(248, 81, 73, 0)
+            }
+        }
+
+        .btn-clear {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 8px;
+            margin-top: 6px;
+            width: 100%;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all .2s
+        }
+
+        .btn-clear:hover {
+            border-color: var(--danger);
+            color: var(--danger)
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center
+        }
+
+        .stat-card .stat-value {
+            font-family: var(--font-mono);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent)
+        }
+
+        .stat-card .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        .draw-hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            line-height: 1.5;
+            display: none
+        }
+
+        .draw-hint.visible {
+            display: block
+        }
+
+        .draw-hint b {
+            color: var(--accent)
+        }
+
+        .spine-pts {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            max-height: 80px;
+            overflow-y: auto
+        }
+
+        #canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-primary);
+            background-image: radial-gradient(circle at 1px 1px, var(--text-muted) .5px, transparent 0);
+            background-size: 24px 24px
+        }
+
+        #canvas-area canvas {
+            flex: 1;
+            display: block
+        }
+
+        .canvas-toolbar {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 6px;
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 6px 10px;
+            z-index: 10
+        }
+
+        .canvas-toolbar button {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            transition: all .15s
+        }
+
+        .canvas-toolbar button:hover {
+            color: var(--text-primary);
+            background: var(--bg-tertiary)
+        }
+
+        .canvas-toolbar button.active {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: var(--accent-glow)
+        }
+
+        .mode-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            z-index: 10;
+            display: none;
+            backdrop-filter: blur(12px);
+            border: 1px solid
+        }
+
+        .mode-badge.draw {
+            display: block;
+            background: rgba(63, 185, 80, .15);
+            color: var(--success);
+            border-color: var(--success)
+        }
+
+        .zoom-indicator {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border)
+        }
+
+        .cursor-coords {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border)
+        }
+
+        #side-panel {
+            width: 320px;
+            min-width: 320px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .side-panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .side-panel-header h2 {
+            font-size: 14px;
+            font-weight: 600
+        }
+
+        .violation-count {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            background: var(--danger);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600
+        }
+
+        .violation-count.clean {
+            background: var(--success)
+        }
+
+        #violations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px
+        }
+
+        #violations-list::-webkit-scrollbar {
+            width: 6px
+        }
+
+        #violations-list::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 3px
+        }
+
+        .violation-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all .2s;
+            animation: slideIn .3s ease-out
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0)
+            }
+        }
+
+        .violation-card:hover {
+            border-color: var(--accent);
+            background: var(--bg-tertiary)
+        }
+
+        .violation-card .v-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
+        }
+
+        .violation-card .v-room {
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .violation-card .v-severity {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-left: auto;
+            padding: 2px 6px;
+            border-radius: 4px
+        }
+
+        .v-severity.error {
+            background: #f8514920;
+            color: var(--danger)
+        }
+
+        .v-severity.critical {
+            background: #da363320;
+            color: var(--critical)
+        }
+
+        .v-severity.warning {
+            background: #d2992220;
+            color: var(--warning)
+        }
+
+        .violation-card .v-message {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 8px
+        }
+
+        .violation-card .v-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px
+        }
+
+        .v-option-btn {
+            font-size: 10px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: var(--font-sans);
+            transition: all .15s
+        }
+
+        .v-option-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow)
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 40px
+        }
+
+        .empty-state .big-icon {
+            font-size: 40px;
+            margin-bottom: 12px
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            line-height: 1.5
+        }
+
+        .room-list-section {
+            border-top: 1px solid var(--border);
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto
+        }
+
+        .room-list-section h3 {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 8px
+        }
+
+        .room-list-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: background .15s
+        }
+
+        .room-list-item:hover {
+            background: var(--bg-tertiary)
+        }
+
+        .room-color-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            border: 1px solid var(--border)
+        }
+
+        .room-list-item .room-info {
+            flex: 1;
+            font-weight: 500
+        }
+
+        .room-list-item .room-meta {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-muted)
+        }
+
+        .stair-info {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 11px;
+            line-height: 1.7
+        }
+
+        .stair-info .si-row {
+            display: flex;
+            justify-content: space-between
+        }
+
+        .stair-info .si-label {
+            color: var(--text-secondary)
+        }
+
+        .stair-info .si-val {
+            font-family: var(--font-mono)
+        }
+
+        .si-ok {
+            color: var(--success)
+        }
+
+        .si-warn {
+            color: var(--warning)
+        }
+
+        .circ-legend {
+            position: absolute;
+            bottom: 40px;
+            left: 16px;
+            font-size: 10px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: none
+        }
+
+        .circ-legend.visible {
+            display: block
+        }
+
+        .circ-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 2px 0;
+            color: var(--text-secondary)
+        }
+
+        .circ-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%
+        }
+
+        /* === SPATIAL ECONOMICS === */
+        .econ-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 11px
+        }
+
+        .econ-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 3px 0
+        }
+
+        .econ-label {
+            color: var(--text-secondary)
+        }
+
+        .econ-val {
+            font-family: var(--font-mono);
+            font-weight: 600
+        }
+
+        .econ-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-tertiary);
+            margin-top: 4px;
+            overflow: hidden
+        }
+
+        .econ-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .3s ease
+        }
+
+        .econ-ok {
+            color: var(--success)
+        }
+
+        .econ-warn {
+            color: var(--warning)
+        }
+
+        .econ-danger {
+            color: var(--danger)
+        }
+
+        /* === DECISION MATRIX === */
+        .decision-card {
+            background: linear-gradient(135deg, #1a1e2e, #161b22);
+            border: 1px solid #30466d;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+            font-size: 11px;
+            animation: fadeIn .3s ease
+        }
+
+        .decision-card .dc-title {
+            color: #79c0ff;
+            font-weight: 600;
+            font-size: 11px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px
+        }
+
+        .decision-card .dc-context {
+            color: var(--text-secondary);
+            font-size: 10px;
+            margin-bottom: 8px;
+            line-height: 1.5
+        }
+
+        .decision-card .dc-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 6px 8px;
+            margin: 4px 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: border-color .2s
+        }
+
+        .decision-card .dc-option:hover {
+            border-color: var(--accent)
+        }
+
+        .decision-card .dc-opt-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 10px
+        }
+
+        .decision-card .dc-opt-desc {
+            color: var(--text-secondary);
+            font-size: 9px;
+            margin-top: 2px
+        }
+
+        .decision-card .dc-opt-tag {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-top: 3px;
+            display: inline-block
+        }
+
+        .dc-tag-green {
+            background: #23843222;
+            color: var(--success)
+        }
+
+        .dc-tag-yellow {
+            background: #d2992222;
+            color: var(--warning)
+        }
+
+        /* === GRID TOGGLE === */
+        .grid-info {
+            font-size: 9px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            margin-top: 4px;
+            text-align: center
+        }
+    </style>
+</head>
+
+<body>
+    <div id="controls-panel">
+        <div class="panel-header">
+            <h1>Ã°Å¸ÂªÂ¶ Finch Engine</h1>
+            <div class="subtitle">Parametric Architecture ÃÂ· Egyptian Code</div>
+        </div>
+        <div class="section">
+            <div class="section-title">Spine Input</div>
+            <button class="btn-action btn-draw" id="btn-draw">Ã¢ÅÂÃ¯Â¸Â Draw Spine</button>
+            <div class="draw-hint" id="draw-hint"><b>Left-click</b> to place points.<br><b>Right-click</b> or
+                <b>Escape</b> to finish.<br><b>Drag</b> existing points to move them.
+            </div>
+            <div class="spine-pts" id="spine-pts"></div>
+            <button class="btn-clear" id="btn-clear">Ã°Å¸ââ Clear Spine</button>
+            <div class="section-title" style="margin-top:14px">Or Use Preset</div>
+            <div class="preset-grid">
+                <button class="preset-btn active" data-preset="L" id="preset-l"><span
+                        class="icon">Ã¢ÅÂ</span>L-Shape</button>
+                <button class="preset-btn" data-preset="U" id="preset-u"><span
+                        class="icon">Ã¢Å â</span>U-Shape</button>
+                <button class="preset-btn" data-preset="I" id="preset-i"><span
+                        class="icon">Ã¢ââ</span>Linear</button>
+                <button class="preset-btn" data-preset="T" id="preset-t"><span
+                        class="icon">Ã¢Å Â¤</span>T-Shape</button>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Corridor</div>
+            <div class="slider-group"><label>Width <span class="val" id="cw-val">1.80 m</span></label><input
+                    type="range" id="corridor-width" min="1.2" max="3.0" step="0.10" value="1.80"></div>
+        </div>
+        <div class="section">
+            <div class="section-title">Room Dimensions</div>
+            <div class="slider-group"><label>Width <span class="val" id="rw-val">3.50 m</span></label><input
+                    type="range" id="room-width" min="2.0" max="6.0" step="0.10" value="3.50"></div>
+            <div class="slider-group"><label>Depth <span class="val" id="rd-val">5.00 m</span></label><input
+                    type="range" id="room-depth" min="2.5" max="8.0" step="0.10" value="5.00"></div>
+        </div>
+        <div class="section">
+            <div class="section-title">Staircase (Egyptian Code)</div>
+            <div class="slider-group"><label>Floor Height <span class="val" id="fh-val">3.00 m</span></label><input
+                    type="range" id="floor-height" min="2.7" max="4.5" step="0.10" value="3.00"></div>
+            <div class="slider-group"><label>Stair Width <span class="val" id="sw-val">1.20 m</span></label><input
+                    type="range" id="stair-width" min="1.0" max="2.0" step="0.05" value="1.20"></div>
+            <div class="stair-info" id="stair-info"></div>
+        </div>
+        <div class="section">
+            <button class="btn-action btn-generate" id="btn-generate">Ã¢âÂ¶ Generate Floor Plan</button>
+        </div>
+        <div class="section">
+            <div class="section-title">Statistics</div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-rooms">0</div>
+                    <div class="stat-label">Rooms</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-hubs">0</div>
+                    <div class="stat-label">Hub Cores</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-violations">0</div>
+                    <div class="stat-label">Violations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-area">0</div>
+                    <div class="stat-label">Total mÃÂ²</div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">ð Spatial Economics</div>
+            <div class="econ-panel" id="econ-panel">
+                <div class="econ-row"><span class="econ-label">Gross BUA</span><span class="econ-val"
+                        id="econ-gross">â</span></div>
+                <div class="econ-row"><span class="econ-label">Net Usable</span><span class="econ-val"
+                        id="econ-net">â</span></div>
+                <div class="econ-row"><span class="econ-label">Circulation</span><span class="econ-val"
+                        id="econ-circ">â</span></div>
+                <div class="econ-row"><span class="econ-label">Net/Gross</span><span class="econ-val"
+                        id="econ-ratio">â</span></div>
+                <div class="econ-bar">
+                    <div class="econ-bar-fill" id="econ-bar" style="width:0%;background:var(--success)"></div>
+                </div>
+                <div class="econ-row"><span class="econ-label">Staircase Core</span><span class="econ-val"
+                        id="econ-stair">â</span></div>
+                <div class="econ-row"><span class="econ-label">Dead Space</span><span class="econ-val"
+                        id="econ-dead">â</span></div>
+                <div class="econ-row"><span class="econ-label">Grid Module</span><span class="econ-val"
+                        id="econ-grid">â</span></div>
+            </div>
+        </div>
+        <div class="section" id="decision-section" style="display:none">
+            <div class="section-title">ð§  Design Advisor</div>
+            <div id="decision-list"></div>
+        </div>
+    </div>
+    <div id="canvas-area">
+        <div class="canvas-toolbar">
+            <button class="active" id="tb-rooms">Rooms</button>
+            <button class="active" id="tb-spine">Spine</button>
+            <button class="active" id="tb-labels">Labels</button>
+            <button id="tb-dims">Dimensions</button>
+            <button id="tb-circ">Circulation</button>
+            <button id="tb-grid">Grid 3m</button>
+        </div>
+        <div class="mode-badge" id="mode-badge">Ã¢ÅÂÃ¯Â¸Â DRAW MODE</div>
+        <canvas id="floorplan"></canvas>
+        <div class="zoom-indicator" id="zoom-ind">100%</div>
+        <div class="cursor-coords" id="cursor-coords">0.00, 0.00</div>
+        <div class="circ-legend" id="circ-legend">
+            <div class="circ-row">
+                <div class="circ-dot" style="background:#3fb950"></div> Ã¢â°Â¤ 15m (safe)
+            </div>
+            <div class="circ-row">
+                <div class="circ-dot" style="background:#d29922"></div> 15Ã¢â¬â30m
+            </div>
+            <div class="circ-row">
+                <div class="circ-dot" style="background:#f85149"></div> &gt; 30m (exceeds)
+            </div>
+        </div>
+    </div>
+    <div id="side-panel">
+        <div class="side-panel-header">
+            <h2>Code Compliance</h2><span class="violation-count clean" id="violation-badge">0</span>
+        </div>
+        <div id="violations-list">
+            <div class="empty-state" id="empty-state">
+                <div class="big-icon">Ã¢Åâ¦</div>
+                <p>No violations detected.<br>Draw a spine and generate a plan.</p>
+            </div>
+        </div>
+        <div class="room-list-section" id="room-list-section">
+            <h3>Room List</h3>
+            <div id="room-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('floorplan');
+        const ctx = canvas.getContext('2d');
+        const PRESETS = {
+            L: [[0, 0], [12, 0], [12, 10]],
+            U: [[0, 0], [10, 0], [10, 8], [0, 8]],
+            I: [[0, 0], [20, 0]],
+            T: [[0, 0], [10, 0], [10, -6]],
+        };
+
+        const S = {
+            data: null, zoom: 1, panX: 0, panY: 0,
+            showRooms: true, showSpine: true, showLabels: true, showDims: false, showCirc: false, showGrid: false,
+            preset: 'L', dragging: false, lastMouse: { x: 0, y: 0 },
+            drawMode: false, customSpine: [], dragIdx: -1, hoverIdx: -1,
+        };
+
+        // --- Sliders ---
+        const slCW = document.getElementById('corridor-width'), slRW = document.getElementById('room-width'), slRD = document.getElementById('room-depth');
+        const vCW = document.getElementById('cw-val'), vRW = document.getElementById('rw-val'), vRD = document.getElementById('rd-val');
+        slCW.addEventListener('input', () => { vCW.textContent = (+slCW.value).toFixed(2) + ' m'; });
+        slRW.addEventListener('input', () => { vRW.textContent = (+slRW.value).toFixed(2) + ' m'; });
+        slRD.addEventListener('input', () => { vRD.textContent = (+slRD.value).toFixed(2) + ' m'; });
+        const slFH = document.getElementById('floor-height'), slSW = document.getElementById('stair-width');
+        const vFH = document.getElementById('fh-val'), vSW = document.getElementById('sw-val');
+        slFH.addEventListener('input', () => { vFH.textContent = (+slFH.value).toFixed(2) + ' m'; });
+        slSW.addEventListener('input', () => { vSW.textContent = (+slSW.value).toFixed(2) + ' m'; });
+
+        // --- Presets ---
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(x => x.classList.remove('active'));
+                b.classList.add('active'); S.preset = b.dataset.preset;
+                S.customSpine = []; updateSpineDisplay();
+                if (S.drawMode) toggleDrawMode();
+            });
+        });
+
+        // --- Toolbar ---
+        ['tb-rooms', 'tb-spine', 'tb-labels', 'tb-dims', 'tb-circ', 'tb-grid'].forEach(id => {
+            const key = { 'tb-rooms': 'showRooms', 'tb-spine': 'showSpine', 'tb-labels': 'showLabels', 'tb-dims': 'showDims', 'tb-circ': 'showCirc', 'tb-grid': 'showGrid' }[id];
+            document.getElementById(id).addEventListener('click', function () {
+                S[key] = !S[key]; this.classList.toggle('active');
+                if (id === 'tb-circ') document.getElementById('circ-legend').classList.toggle('visible', S.showCirc);
+                draw();
+            });
+        });
+
+        // --- Draw Mode ---
+        const btnDraw = document.getElementById('btn-draw');
+        const drawHint = document.getElementById('draw-hint');
+        const modeBadge = document.getElementById('mode-badge');
+
+        btnDraw.addEventListener('click', toggleDrawMode);
+        document.getElementById('btn-clear').addEventListener('click', () => {
+            S.customSpine = []; S.data = null; updateSpineDisplay(); draw();
+        });
+
+        function toggleDrawMode() {
+            S.drawMode = !S.drawMode;
+            btnDraw.textContent = S.drawMode ? 'Ã¢ÂÂ¹ Stop Drawing' : 'Ã¢ÅÂÃ¯Â¸Â Draw Spine';
+            btnDraw.classList.toggle('drawing', S.drawMode);
+            drawHint.classList.toggle('visible', S.drawMode);
+            modeBadge.classList.toggle('draw', S.drawMode);
+            canvas.style.cursor = S.drawMode ? 'crosshair' : 'grab';
+            draw();
+        }
+
+        function updateSpineDisplay() {
+            const el = document.getElementById('spine-pts');
+            if (S.customSpine.length === 0) { el.textContent = ''; return; }
+            el.textContent = 'Points: ' + S.customSpine.map(p => `(${p[0].toFixed(1)}, ${p[1].toFixed(1)})`).join(' Ã¢â â ');
+        }
+
+        // --- Canvas resize ---
+        function resize() {
+            const r = canvas.parentElement.getBoundingClientRect();
+            canvas.width = r.width * devicePixelRatio;
+            canvas.height = r.height * devicePixelRatio;
+            canvas.style.width = r.width + 'px';
+            canvas.style.height = r.height + 'px';
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+            draw();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- Coordinate transforms ---
+        function toScreen(p) { return [p[0] * S.zoom + S.panX, p[1] * S.zoom + S.panY]; }
+        function toWorld(sx, sy) { return [(sx - S.panX) / S.zoom, (sy - S.panY) / S.zoom]; }
+        function canvasXY(e) {
+            const r = canvas.getBoundingClientRect();
+            return [e.clientX - r.left, e.clientY - r.top];
+        }
+
+        // --- Zoom (centered on mouse) ---
+        canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const [mx, my] = canvasXY(e);
+            const [wx, wy] = toWorld(mx, my);
+            const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+            S.zoom = Math.max(0.5, Math.min(200, S.zoom * factor));
+            // Re-center on mouse
+            S.panX = mx - wx * S.zoom;
+            S.panY = my - wy * S.zoom;
+            document.getElementById('zoom-ind').textContent = Math.round(S.zoom * 100) + '%';
+            draw();
+        }, { passive: false });
+
+        // --- Mouse events ---
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        canvas.addEventListener('mousedown', e => {
+            const [mx, my] = canvasXY(e);
+            if (S.drawMode) {
+                if (e.button === 2) { toggleDrawMode(); return; }
+                // Check if clicking near an existing point (drag)
+                const hitIdx = findNearPoint(mx, my, S.customSpine, 12);
+                if (hitIdx >= 0) { S.dragIdx = hitIdx; canvas.style.cursor = 'grabbing'; return; }
+                // Place new point
+                if (e.button === 0) {
+                    const [wx, wy] = toWorld(mx, my);
+                    S.customSpine.push([Math.round(wx * 4) / 4, Math.round(wy * 4) / 4]); // snap to 0.25m
+                    updateSpineDisplay(); draw();
+                }
+                return;
+            }
+            // Pan mode
+            if (e.button === 0) { S.dragging = true; S.lastMouse = { x: e.clientX, y: e.clientY }; canvas.style.cursor = 'grabbing'; }
+        });
+
+        window.addEventListener('mouseup', () => {
+            S.dragging = false; S.dragIdx = -1;
+            canvas.style.cursor = S.drawMode ? 'crosshair' : 'grab';
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const [mx, my] = canvasXY(e);
+            const [wx, wy] = toWorld(mx, my);
+            document.getElementById('cursor-coords').textContent = wx.toFixed(2) + ', ' + wy.toFixed(2);
+
+            if (S.dragIdx >= 0) {
+                S.customSpine[S.dragIdx] = [Math.round(wx * 4) / 4, Math.round(wy * 4) / 4];
+                updateSpineDisplay(); draw(); return;
+            }
+            if (S.dragging) {
+                S.panX += e.clientX - S.lastMouse.x;
+                S.panY += e.clientY - S.lastMouse.y;
+                S.lastMouse = { x: e.clientX, y: e.clientY };
+                draw(); return;
+            }
+            if (S.drawMode) {
+                S.hoverIdx = findNearPoint(mx, my, S.customSpine, 12);
+                canvas.style.cursor = S.hoverIdx >= 0 ? 'grab' : 'crosshair';
+            }
+            draw(); // for cursor guide
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && S.drawMode) toggleDrawMode();
+            if ((e.key === 'z' || e.key === 'Z') && e.ctrlKey && S.drawMode && S.customSpine.length > 0) {
+                S.customSpine.pop(); updateSpineDisplay(); draw();
+            }
+        });
+
+        function findNearPoint(mx, my, pts, threshold) {
+            for (let i = 0; i < pts.length; i++) {
+                const sp = toScreen(pts[i]);
+                const dx = sp[0] - mx, dy = sp[1] - my;
+                if (Math.sqrt(dx * dx + dy * dy) < threshold) return i;
+            }
+            return -1;
+        }
+
+        // --- Generate ---
+        document.getElementById('btn-generate').addEventListener('click', generate);
+
+        async function generate() {
+            const btn = document.getElementById('btn-generate');
+            btn.textContent = 'Ã¢ÂÂ³ GeneratingÃ¢â¬Â¦'; btn.disabled = true;
+            const spine = S.customSpine.length >= 2 ? S.customSpine : PRESETS[S.preset];
+            const payload = { corridor_width: +slCW.value, room_width: +slRW.value, room_depth: +slRD.value, floor_height: +slFH.value, stair_width: +slSW.value, spine };
+            try {
+                const res = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                S.data = await res.json();
+                if (!S.data.hubs) S.data.hubs = [];
+                if (!S.data.staircase && S.data.cores && S.data.cores.length > 0) S.data.staircase = S.data.cores[0].stair;
+                if (!S.data.elevator && S.data.cores && S.data.cores.length > 0) S.data.elevator = S.data.cores[0].elevator;
+                if (!S.data.violations) S.data.violations = [];
+            } catch (err) { S.data = computeLocal(payload); }
+            updateUI(); autoFit(); draw();
+            btn.textContent = 'Ã¢âÂ¶ Generate Floor Plan'; btn.disabled = false;
+        }
+
+        // --- Local Computation (UPDATED V2) ---
+        function computeLocal(params) {
+            const { corridor_width, room_width, room_depth, floor_height, stair_width, spine: raw } = params;
+            const half = corridor_width / 2;
+            const segs = []; for (let i = 0; i < raw.length - 1; i++) segs.push({ p1: raw[i], p2: raw[i + 1] });
+
+            function vc(s) { return [s.p2[0] - s.p1[0], s.p2[1] - s.p1[1]]; }
+            function ln(v) { return Math.sqrt(v[0] * v[0] + v[1] * v[1]); }
+            function nm(v) { const l = ln(v); return l < 1e-12 ? [0, 0] : [v[0] / l, v[1] / l]; }
+            function nl(s) { const d = nm(vc(s)); return [-d[1], d[0]]; }
+            function off(s, d) { const n = nl(s); return { p1: [s.p1[0] + n[0] * d, s.p1[1] + n[1] * d], p2: [s.p2[0] + n[0] * d, s.p2[1] + n[1] * d] }; }
+            function cr(a, b) { return a[0] * b[1] - a[1] * b[0]; }
+            function lx(s1, s2) { const d1 = vc(s1), d2 = vc(s2), dn = cr(d1, d2); if (Math.abs(dn) < 1e-12) return null; const dp = [s2.p1[0] - s1.p1[0], s2.p1[1] - s1.p1[1]]; const t = cr(dp, d2) / dn; return [s1.p1[0] + d1[0] * t, s1.p1[1] + d1[1] * t]; }
+
+            let L = segs.map(s => off(s, half)), R = segs.map(s => off(s, -half));
+            const hubs = [];
+
+            for (let i = 0; i < segs.length - 1; i++) {
+                let ix = lx(L[i], L[i + 1]); if (ix) { L[i] = { p1: L[i].p1, p2: ix }; L[i + 1] = { p1: ix, p2: L[i + 1].p2 }; }
+                ix = lx(R[i], R[i + 1]); if (ix) { R[i] = { p1: R[i].p1, p2: ix }; R[i + 1] = { p1: ix, p2: R[i + 1].p2 }; }
+                hubs.push({ vertex: raw[i + 1], boundary: [L[i].p2, L[i + 1].p1, R[i + 1].p1, R[i].p2], angle: 90 });
+            }
+
+            const corridors = []; for (let i = 0; i < L.length; i++) corridors.push([L[i].p1, L[i].p2, R[i].p2, R[i].p1]);
+            const rooms = [], cols = [[100, 160, 230], [120, 200, 150], [230, 180, 100], [200, 130, 200], [150, 210, 220], [220, 140, 130], [170, 190, 130], [180, 150, 220]];
+            let ri = 1;
+
+            // --- FIX 1 (UPGRADED): SENIOR ARCHITECT MODULAR SUBDIVISION ---
+            function sub(edge, sign, isStartCorner, isEndCorner) {
+                let p1 = edge.p1, p2 = edge.p2;
+                let v = [p2[0] - p1[0], p2[1] - p1[1]];
+                let d = nm(v);
+
+                // 1. Zoom Clearance (Pillar 3: BIM Topology)
+                const trimDist = room_depth * 0.6;
+                let startTrim = isStartCorner ? trimDist : 0;
+                let endTrim = isEndCorner ? trimDist : 0;
+
+                let totalL = ln(v);
+                let actualL = totalL - startTrim - endTrim;
+                if (actualL < room_width) return;
+
+                let safe_p1 = [p1[0] + d[0] * startTrim, p1[1] + d[1] * startTrim];
+                let safe_v = [p2[0] - d[0] * endTrim - safe_p1[0], p2[1] - d[1] * endTrim - safe_p1[1]];
+
+                // 2. Architectural Module (Pillar 3: Modular Constructability)
+                const GRID_MODULE = 0.10; // 10cm BIM module
+                const num = Math.floor(actualL / room_width);
+
+                // Calculate modular room width
+                let raw_aw = actualL / num;
+                let modular_aw = Math.floor(raw_aw / GRID_MODULE) * GRID_MODULE;
+
+                // Calculate leftover "remainder" for Shaft generation
+                let remainder = actualL - (modular_aw * num);
+
+                const n = [-d[1] * sign, d[0] * sign];
+                let current_t = 0;
+
+                // 3. Generate Standard Modular Rooms
+                for (let i = 0; i < num; i++) {
+                    const step_t = modular_aw / actualL;
+                    const next_t = current_t + step_t;
+
+                    const c1 = [safe_p1[0] + safe_v[0] * current_t, safe_p1[1] + safe_v[1] * current_t];
+                    const c2 = [safe_p1[0] + safe_v[0] * next_t, safe_p1[1] + safe_v[1] * next_t];
+                    const c3 = [c2[0] + n[0] * room_depth, c2[1] + n[1] * room_depth];
+                    const c4 = [c1[0] + n[0] * room_depth, c1[1] + n[1] * room_depth];
+
+                    const area = modular_aw * room_depth, minW = modular_aw;
+                    const fc = cols[(ri - 1) % cols.length];
+                    const ad = Math.max(0, 10 - area), wd = Math.max(0, 2.70 - minW);
+
+                    let st = { type: 'none', color: [0, 0, 0], weight: 0, dash: [0, 0] };
+                    if (ad > 0 || wd > 0) {
+                        const df = Math.max(ad, wd);
+                        st = { type: 'solid', color: [255 - fc[0], 255 - fc[1], 255 - fc[2]], weight: 1.5 + df * 2, dash: [0, 0] };
+                    }
+
+                    rooms.push({ label: 'Room ' + ri, boundary: [c1, c2, c3, c4], area: Math.round(area * 100) / 100, min_width: Math.round(minW * 100) / 100, landlocked: false, fill: fc, stroke: st });
+                    ri++;
+                    current_t = next_t;
+                }
+
+                // 4. Smart Shaft Generation (Pillar 1: Spatial Economics)
+                if (remainder > 0.40) {
+                    const c1 = [safe_p1[0] + safe_v[0] * current_t, safe_p1[1] + safe_v[1] * current_t];
+                    const c2 = [safe_p1[0] + safe_v[0], safe_p1[1] + safe_v[1]];
+                    const c3 = [c2[0] + n[0] * room_depth, c2[1] + n[1] * room_depth];
+                    const c4 = [c1[0] + n[0] * room_depth, c1[1] + n[1] * room_depth];
+
+                    rooms.push({
+                        label: 'Shaft', boundary: [c1, c2, c3, c4],
+                        area: Math.round((remainder * room_depth) * 100) / 100,
+                        min_width: Math.round(remainder * 100) / 100,
+                        landlocked: true, fill: [60, 60, 60],
+                        stroke: { type: 'none', color: [0, 0, 0], weight: 0, dash: [0, 0] }
+                    });
+                }
+            }
+
+            // Apply with corner awareness
+            for (let i = 0; i < L.length; i++) {
+                sub(L[i], 1, i > 0, i < L.length - 1);
+            }
+            for (let i = 0; i < R.length; i++) {
+                sub(R[i], -1, i > 0, i < R.length - 1);
+            }
+
+            // --- End cap rooms at spine terminators ---
+            const sd0 = nm(vc(segs[0]));
+            const ec1 = L[0].p1, ec2 = R[0].p1;
+            const ec3 = [ec2[0] - sd0[0] * room_depth, ec2[1] - sd0[1] * room_depth];
+            const ec4 = [ec1[0] - sd0[0] * room_depth, ec1[1] - sd0[1] * room_depth];
+            const ecW = ln([ec2[0] - ec1[0], ec2[1] - ec1[1]]);
+            rooms.push({ label: 'Room ' + ri++, boundary: [ec1, ec2, ec3, ec4], area: Math.round(ecW * room_depth * 100) / 100, min_width: Math.round(Math.min(ecW, room_depth) * 100) / 100, landlocked: false, fill: [160, 180, 210], stroke: { type: 'none', color: [0, 0, 0], weight: 0, dash: [0, 0] }, endcap: true });
+
+            const sdN = nm(vc(segs[segs.length - 1]));
+            const ee1 = L[L.length - 1].p2, ee2 = R[R.length - 1].p2;
+            const ee3 = [ee2[0] + sdN[0] * room_depth, ee2[1] + sdN[1] * room_depth];
+            const ee4 = [ee1[0] + sdN[0] * room_depth, ee1[1] + sdN[1] * room_depth];
+            const eeW = ln([ee2[0] - ee1[0], ee2[1] - ee1[1]]);
+            rooms.push({ label: 'Room ' + ri++, boundary: [ee1, ee2, ee3, ee4], area: Math.round(eeW * room_depth * 100) / 100, min_width: Math.round(Math.min(eeW, room_depth) * 100) / 100, landlocked: false, fill: [160, 180, 210], stroke: { type: 'none', color: [0, 0, 0], weight: 0, dash: [0, 0] }, endcap: true });
+
+            // === SAFE STAIRCASE (Egyptian Building Code) ===
+            const fh = floor_height || 3.0, sw = stair_width || 1.20;
+            const numRisers = Math.ceil(fh / 0.175) || 18;
+            const riser = +(fh / numRisers).toFixed(4);
+            const tread = +(0.62 - 2 * riser).toFixed(4);
+            const flights = []; let rem = numRisers;
+            while (rem > 0) { const f = Math.min(14, rem); flights.push(f); rem -= f; }
+
+            let sOrigin = [0, 0], runDir = [1, 0], widthDir = [0, 1], coreHubIdx = -1;
+            let staircase = null;
+
+            try {
+                if (hubs.length > 0 && segs.length >= 2) {
+                    coreHubIdx = 0;
+                    const hub = hubs[0];
+                    const d2 = nm(vc(segs[1]));
+                    runDir = d2;
+                    widthDir = [d2[1], -d2[0]];
+                    sOrigin = [hub.vertex[0] + widthDir[0] * half, hub.vertex[1] + widthDir[1] * half];
+                } else if (segs.length > 0) {
+                    const lastSeg = segs[segs.length - 1];
+                    runDir = nm(vc(lastSeg));
+                    widthDir = [runDir[1], -runDir[0]];
+                    const endPt = raw[raw.length - 1];
+                    sOrigin = [endPt[0] + widthDir[0] * half, endPt[1] + widthDir[1] * half];
+                }
+
+                const run1 = (flights[0] || 9) * tread;
+                const totalW = sw * 2 + 0.10;
+                const landingD = sw;
+                const outerB = [
+                    sOrigin,
+                    [sOrigin[0] + widthDir[0] * totalW, sOrigin[1] + widthDir[1] * totalW],
+                    [sOrigin[0] + widthDir[0] * totalW + runDir[0] * (run1 + landingD), sOrigin[1] + widthDir[1] * totalW + runDir[1] * (run1 + landingD)],
+                    [sOrigin[0] + runDir[0] * (run1 + landingD), sOrigin[1] + runDir[1] * (run1 + landingD)],
+                ];
+
+                // Flight 1
+                const f1 = [
+                    sOrigin,
+                    [sOrigin[0] + widthDir[0] * sw, sOrigin[1] + widthDir[1] * sw],
+                    [sOrigin[0] + widthDir[0] * sw + runDir[0] * run1, sOrigin[1] + widthDir[1] * sw + runDir[1] * run1],
+                    [sOrigin[0] + runDir[0] * run1, sOrigin[1] + runDir[1] * run1],
+                ];
+                // Landing
+                const lO = [sOrigin[0] + runDir[0] * run1, sOrigin[1] + runDir[1] * run1];
+                const landing = [
+                    lO,
+                    [lO[0] + widthDir[0] * totalW, lO[1] + widthDir[1] * totalW],
+                    [lO[0] + widthDir[0] * totalW + runDir[0] * landingD, lO[1] + widthDir[1] * totalW + runDir[1] * landingD],
+                    [lO[0] + runDir[0] * landingD, lO[1] + runDir[1] * landingD],
+                ];
+                // Flight 2
+                const f2O = [sOrigin[0] + widthDir[0] * (sw + 0.10), sOrigin[1] + widthDir[1] * (sw + 0.10)];
+                const f2 = [
+                    f2O,
+                    [f2O[0] + widthDir[0] * sw, f2O[1] + widthDir[1] * sw],
+                    [f2O[0] + widthDir[0] * sw + runDir[0] * run1, f2O[1] + widthDir[1] * sw + runDir[1] * run1],
+                    [f2O[0] + runDir[0] * run1, f2O[1] + runDir[1] * run1],
+                ];
+                // Treads
+                const treads1 = [], treads2 = [];
+                for (let i = 0; i <= flights[0]; i++) {
+                    const t = i * tread;
+                    treads1.push([
+                        [sOrigin[0] + runDir[0] * t, sOrigin[1] + runDir[1] * t],
+                        [sOrigin[0] + widthDir[0] * sw + runDir[0] * t, sOrigin[1] + widthDir[1] * sw + runDir[1] * t],
+                    ]);
+                }
+                if (flights[1]) {
+                    const run2 = flights[1] * tread;
+                    for (let i = 0; i <= flights[1]; i++) {
+                        const t = run1 - i * tread;
+                        treads2.push([
+                            [f2O[0] + runDir[0] * t, f2O[1] + runDir[1] * t],
+                            [f2O[0] + widthDir[0] * sw + runDir[0] * t, f2O[1] + widthDir[1] * sw + runDir[1] * t],
+                        ]);
+                    }
+                }
+
+                staircase = {
+                    type: 'u-shape', boundary: outerB, flight1: f1, flight2: f2, landing,
+                    treads: [...treads1, ...treads2], flights, numRisers, riser, tread,
+                    stairWidth: sw, coreHubIdx,
+                    centroid: [(outerB[0][0] + outerB[2][0]) / 2, (outerB[0][1] + outerB[2][1]) / 2],
+                };
+            } catch (e) {
+                console.log("Staircase skipped due to geometry edge-case:", e);
+            }
+
+            // === Violations ===
+            const violations = [];
+            for (const r of rooms) {
+                if (r.area < 10) violations.push({ room: r.label, severity: 'error', message: `Area ${r.area} mÂ² \u003c 10 mÂ²`, options: ['Merge', 'Shift wall', 'Increase depth'] });
+                if (r.min_width < 2.70) violations.push({ room: r.label, severity: 'error', message: `Width ${r.min_width} m \u003c 2.70 m`, options: ['Shift wall', 'Increase width'] });
+            }
+
+            if (staircase && riser > 0.175) violations.push({ room: 'Staircase', severity: 'error', message: `Riser ${(riser * 100).toFixed(1)}cm \u003e 17.5cm max`, options: ['Increase floor height'] });
+            if (staircase && tread < 0.27) violations.push({ room: 'Staircase', severity: 'error', message: `Tread ${(tread * 100).toFixed(1)}cm \u003c 27cm min`, options: ['Reduce riser'] });
+            if (staircase && sw < 1.10) violations.push({ room: 'Staircase', severity: 'error', message: `Stair width ${(sw * 100).toFixed(0)}cm \u003c 110cm min`, options: ['Increase stair width'] });
+
+            const circDistances = [];
+            if (staircase) {
+                for (const r of rooms) {
+                    const bl = r.boundary.length;
+                    const cx = r.boundary.reduce((s, p) => s + p[0], 0) / bl;
+                    const cy = r.boundary.reduce((s, p) => s + p[1], 0) / bl;
+                    const dx = cx - staircase.centroid[0], dy = cy - staircase.centroid[1];
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    circDistances.push({ room: r.label, dist: Math.round(dist * 100) / 100 });
+                    if (dist > 30) violations.push({ room: r.label, severity: 'warning', message: `Travel distance ${dist.toFixed(1)}m \u003e 30m max`, options: ['Add second staircase'] });
+                }
+            }
+            // === PILLAR 1: SPATIAL ECONOMICS ===
+            // Polygon area via shoelace
+            function polyArea(poly) {
+                let a = 0; for (let i = 0; i < poly.length; i++) { const j = (i + 1) % poly.length; a += poly[i][0] * poly[j][1] - poly[j][0] * poly[i][1]; } return Math.abs(a) / 2;
+            }
+            // Separate Net Usable from Service Area (Shafts)
+            const netUsable = rooms.filter(r => r.label !== 'Shaft').reduce((s, r) => s + r.area, 0);
+            const serviceArea = rooms.filter(r => r.label === 'Shaft').reduce((s, r) => s + r.area, 0);
+
+            const corrArea = corridors.reduce((s, c) => s + polyArea(c), 0);
+            const hubArea = hubs.reduce((s, h) => s + polyArea(h.boundary), 0);
+            const stairArea = staircase ? polyArea(staircase.boundary) : 0;
+            const circArea = corrArea + hubArea;
+            const grossBUA = netUsable + circArea + stairArea + serviceArea;
+
+            // Dead space at hub corners + automated shafts
+            const trimDist = room_depth * 0.6;
+            const cornerWaste = hubs.length * (trimDist * corridor_width) * 2;
+            const totalNonUsableArea = serviceArea + cornerWaste;
+
+            const netGrossRatio = grossBUA > 0 ? (netUsable / grossBUA) * 100 : 0;
+            const circPercent = grossBUA > 0 ? (circArea / grossBUA) * 100 : 0;
+
+            // Pillar 1 violations
+            if (circPercent > 20) {
+                violations.push({ room: 'Building', severity: 'warning', message: `Circulation is ${circPercent.toFixed(1)}% of BUA (max 20%)`, options: ['Narrow corridor', 'Extend rooms', 'Reduce spine length'] });
+            }
+            if (totalNonUsableArea > 5) {
+                violations.push({ room: 'Spatial Economics', severity: 'warning', message: `High non-usable area (${totalNonUsableArea.toFixed(1)}mÂ² incl. shafts). Optimize corner junctions.`, options: ['Consolidate shafts', 'Merge rooms'] });
+            }
+
+            // === PILLAR 3: BIM-READY GRID ALIGNMENT ===
+            const gridModule = 3.0; // 3m structural grid
+            let gridAligned = 0, gridTotal = rooms.length;
+            for (const r of rooms) {
+                const w = r.area / (r.min_width || 1);
+                const wMod = Math.abs(w - Math.round(w / gridModule) * gridModule);
+                const dMod = Math.abs(r.min_width - Math.round(r.min_width / gridModule) * gridModule);
+                if (wMod < 0.15 && dMod < 0.15) gridAligned++;
+            }
+            const gridScore = gridTotal > 0 ? (gridAligned / gridTotal * 100) : 0;
+
+            // === PILLAR 4: DECISION MATRIX ===
+            const decisions = [];
+
+            // Decision: Tight rooms
+            const tightRooms = rooms.filter(r => r.min_width < 3.0 && r.min_width >= 2.70);
+            if (tightRooms.length > 0) {
+                decisions.push({
+                    trigger: 'tight_rooms',
+                    title: 'ð Narrow Rooms Detected',
+                    context: `${tightRooms.length} room(s) have width between 2.70â3.00m. Technically compliant but not optimal for furniture layout.`,
+                    options: [
+                        { label: 'Option A: Merge adjacent pairs', desc: 'Combine 2 narrow rooms into 1 larger space. Reduces unit count but improves livability.', tag: 'Saves ~' + (tightRooms.length * 0.5).toFixed(0) + 'mÂ²', tagClass: 'dc-tag-green' },
+                        { label: 'Option B: Increase room width', desc: 'Adjust room_width slider to 3.5m+. May reduce total room count.', tag: 'Recommended', tagClass: 'dc-tag-green' },
+                    ]
+                });
+            }
+
+            // Decision: Over-circulation
+            if (circPercent > 18) {
+                decisions.push({
+                    trigger: 'over_circulation',
+                    title: 'ð High Circulation Ratio',
+                    context: `Circulation uses ${circPercent.toFixed(1)}% of the gross BUA (${circArea.toFixed(1)}mÂ²). Target: â¤20%. Developer ROI is impacted.`,
+                    options: [
+                        { label: 'Option A: Narrow the corridor', desc: `Current: ${corridor_width.toFixed(2)}m. Reducing to 1.50m saves ~${((corridor_width - 1.5) * corridors.reduce((s, c) => s + ln([c[1][0] - c[0][0], c[1][1] - c[0][1]]), 0)).toFixed(1)}mÂ².`, tag: 'Max savings', tagClass: 'dc-tag-green' },
+                        { label: 'Option B: Deepen rooms', desc: `Increase room depth to absorb more floor area into usable space.`, tag: 'Better N/G ratio', tagClass: 'dc-tag-yellow' },
+                    ]
+                });
+            }
+
+            // Decision: Grid misalignment
+            if (gridScore < 60) {
+                decisions.push({
+                    trigger: 'grid_misalign',
+                    title: 'ðï¸ Low Grid Alignment',
+                    context: `Only ${gridScore.toFixed(0)}% of rooms align with the ${gridModule}m structural grid. This increases construction complexity and cost.`,
+                    options: [
+                        { label: 'Option A: Snap room width to 3.0m', desc: 'Set room width to a multiple of 3.0m for structural efficiency.', tag: 'BIM-ready', tagClass: 'dc-tag-green' },
+                        { label: 'Option B: Use 1.2m module', desc: 'Use a finer 1.2m module (3.6m, 4.8m rooms). More flexible but still modular.', tag: 'Flexible', tagClass: 'dc-tag-yellow' },
+                    ]
+                });
+            }
+
+            // Decision: Long wing needing secondary escape
+            const farthestRoom = circDistances.length > 0 ? circDistances.reduce((max, cd) => cd.dist > max.dist ? cd : max, circDistances[0]) : null;
+            if (farthestRoom && farthestRoom.dist > 25) {
+                decisions.push({
+                    trigger: 'escape_wing',
+                    title: 'ð¨ Extended Wing â Escape Risk',
+                    context: `${farthestRoom.room} is ${farthestRoom.dist.toFixed(1)}m from the stair core. Egyptian Code limit is 30m. ${farthestRoom.dist > 30 ? 'VIOLATION!' : 'Approaching limit.'}`,
+                    options: [
+                        { label: 'Option A: Add secondary fire escape', desc: 'Place a second staircase core at the far end of the extended wing.', tag: 'Code compliant', tagClass: 'dc-tag-green' },
+                        { label: 'Option B: Shorten the wing', desc: 'Reduce spine length so all rooms stay within 25m travel distance.', tag: 'Conservative', tagClass: 'dc-tag-yellow' },
+                    ]
+                });
+            }
+
+            const economics = {
+                grossBUA: Math.round(grossBUA * 100) / 100,
+                netUsable: Math.round(netUsable * 100) / 100,
+                circArea: Math.round(circArea * 100) / 100,
+                circPercent: Math.round(circPercent * 10) / 10,
+                stairArea: Math.round(stairArea * 100) / 100,
+                deadSpace: Math.round(totalNonUsableArea * 100) / 100,
+                netGrossRatio: Math.round(netGrossRatio * 1000) / 10,
+                gridModule,
+                gridAligned,
+                gridTotal,
+                gridScore: Math.round(gridScore),
+            };
+
+            return { spine: raw, corridors, hubs, rooms, violations, staircase, circDistances, intersections: [], economics, decisions, errors: [] };
+        }
+
+
+        // --- UI Update ---
+        function updateUI() {
+            if (!S.data) return; const d = S.data;
+            document.getElementById('stat-rooms').textContent = d.rooms.length;
+            document.getElementById('stat-hubs').textContent = d.hubs.length;
+            document.getElementById('stat-violations').textContent = d.violations.length;
+            document.getElementById('stat-area').textContent = d.rooms.filter(r => r.label !== 'Shaft').reduce((s, r) => s + r.area, 0).toFixed(0);
+            const badge = document.getElementById('violation-badge');
+            badge.textContent = d.violations.length; badge.className = 'violation-count ' + (d.violations.length === 0 ? 'clean' : '');
+            const list = document.getElementById('violations-list');
+            if (d.violations.length === 0) { list.innerHTML = '<div class="empty-state"><div class="big-icon">Ã¢Åâ¦</div><p>All rooms comply with Egyptian Building Code.</p></div>'; }
+            else { list.innerHTML = d.violations.map((v, i) => `<div class="violation-card" style="animation-delay:${i * 60}ms"><div class="v-header"><span>${v.severity === 'critical' ? 'Ã°Å¸Å¡Â«' : v.severity === 'warning' ? 'Ã¢Å¡Â¡' : 'Ã¢Å¡Â Ã¯Â¸Â'}</span><span class="v-room">${v.room}</span><span class="v-severity ${v.severity}">${v.severity}</span></div><div class="v-message">${v.message}</div><div class="v-options">${v.options.map(o => `<button class="v-option-btn">${o}</button>`).join('')}</div></div>`).join(''); }
+            document.getElementById('room-list').innerHTML = d.rooms.map(r => `<div class="room-list-item"><div class="room-color-swatch" style="background:rgb(${r.fill.join(',')})"></div><span class="room-info">${r.label}</span><span class="room-meta">${r.area} mÃÂ²</span></div>`).join('');
+            // Staircase info panel
+            if (d.staircase) {
+                const sc = d.staircase, el = document.getElementById('stair-info');
+                const rOk = sc.riser <= 0.175, tOk = sc.tread >= 0.27, wOk = sc.stairWidth >= 1.10;
+                const formula = (2 * sc.riser + sc.tread);
+                el.innerHTML = `
+                    <div class="si-row"><span class="si-label">Risers</span><span class="si-val">${sc.numRisers} (${sc.flights.join('+')})</span></div>
+                    <div class="si-row"><span class="si-label">Riser H</span><span class="si-val ${rOk ? 'si-ok' : 'si-warn'}">${(sc.riser * 100).toFixed(1)}cm ${rOk ? 'Ã¢Åâ' : 'Ã¢Å¡Â '}</span></div>
+                    <div class="si-row"><span class="si-label">Tread D</span><span class="si-val ${tOk ? 'si-ok' : 'si-warn'}">${(sc.tread * 100).toFixed(1)}cm ${tOk ? 'Ã¢Åâ' : 'Ã¢Å¡Â '}</span></div>
+                    <div class="si-row"><span class="si-label">2R+T</span><span class="si-val">${(formula * 100).toFixed(1)}cm</span></div>
+                    <div class="si-row"><span class="si-label">Width</span><span class="si-val ${wOk ? 'si-ok' : 'si-warn'}">${(sc.stairWidth * 100).toFixed(0)}cm ${wOk ? 'Ã¢Åâ' : 'Ã¢Å¡Â '}</span></div>
+                    <div class="si-row"><span class="si-label">Type</span><span class="si-val">${sc.type === 'u-shape' ? 'U-Shape' : 'Single Flight'}</span></div>`;
+            }
+            // === SPATIAL ECONOMICS PANEL ===
+            if (d.economics) {
+                const e = d.economics;
+                const ratioClass = e.netGrossRatio >= 80 ? 'econ-ok' : e.netGrossRatio >= 70 ? 'econ-warn' : 'econ-danger';
+                const circClass = e.circPercent <= 15 ? 'econ-ok' : e.circPercent <= 20 ? 'econ-warn' : 'econ-danger';
+                const deadClass = e.deadSpace <= 2 ? 'econ-ok' : e.deadSpace <= 5 ? 'econ-warn' : 'econ-danger';
+                const gridClass = e.gridScore >= 80 ? 'econ-ok' : e.gridScore >= 50 ? 'econ-warn' : 'econ-danger';
+                document.getElementById('econ-gross').textContent = e.grossBUA.toFixed(0) + ' mÂ²';
+                document.getElementById('econ-net').textContent = e.netUsable.toFixed(0) + ' mÂ²';
+                const ec = document.getElementById('econ-circ');
+                ec.textContent = e.circArea.toFixed(0) + ' mÂ² (' + e.circPercent.toFixed(1) + '%)';
+                ec.className = 'econ-val ' + circClass;
+                const er = document.getElementById('econ-ratio');
+                er.textContent = e.netGrossRatio.toFixed(1) + '%';
+                er.className = 'econ-val ' + ratioClass;
+                const bar = document.getElementById('econ-bar');
+                bar.style.width = Math.min(100, e.netGrossRatio) + '%';
+                bar.style.background = e.netGrossRatio >= 80 ? 'var(--success)' : e.netGrossRatio >= 70 ? 'var(--warning)' : 'var(--danger)';
+                document.getElementById('econ-stair').textContent = e.stairArea.toFixed(1) + ' mÂ²';
+                const ed = document.getElementById('econ-dead');
+                ed.textContent = e.deadSpace.toFixed(1) + ' mÂ²';
+                ed.className = 'econ-val ' + deadClass;
+                const eg = document.getElementById('econ-grid');
+                eg.textContent = e.gridAligned + '/' + e.gridTotal + ' (' + e.gridScore + '%)';
+                eg.className = 'econ-val ' + gridClass;
+            }
+            // === DECISION MATRIX ===
+            const dSec = document.getElementById('decision-section');
+            const dList = document.getElementById('decision-list');
+            if (d.decisions && d.decisions.length > 0) {
+                dSec.style.display = 'block';
+                dList.innerHTML = d.decisions.map(dec => `
+                    <div class="decision-card">
+                        <div class="dc-title">${dec.title}</div>
+                        <div class="dc-context">${dec.context}</div>
+                        ${dec.options.map(opt => `
+                            <div class="dc-option">
+                                <div>
+                                    <div class="dc-opt-label">${opt.label}</div>
+                                    <div class="dc-opt-desc">${opt.desc}</div>
+                                    <span class="dc-opt-tag ${opt.tagClass}">${opt.tag}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('');
+            } else {
+                dSec.style.display = 'none';
+                dList.innerHTML = '';
+            }
+        }
+
+        // --- AutoFit ---
+        function autoFit() {
+            if (!S.data || S.data.rooms.length === 0) return;
+            let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+            for (const r of S.data.rooms) for (const p of r.boundary) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+            if (S.data.staircase) for (const p of S.data.staircase.boundary) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
+            const cw = canvas.width / devicePixelRatio, ch = canvas.height / devicePixelRatio;
+            const dw = x1 - x0 || 1, dh = y1 - y0 || 1, pad = 100;
+            S.zoom = Math.min((cw - pad * 2) / dw, (ch - pad * 2) / dh);
+            S.panX = cw / 2 - (x0 + dw / 2) * S.zoom;
+            S.panY = ch / 2 - (y0 + dh / 2) * S.zoom;
+            document.getElementById('zoom-ind').textContent = Math.round(S.zoom * 100) + '%';
+        }
+
+        // --- Drawing ---
+        function draw() {
+            const cw = canvas.width / devicePixelRatio, ch = canvas.height / devicePixelRatio;
+            ctx.clearRect(0, 0, cw, ch);
+
+            // Grid
+            drawGrid(cw, ch);
+
+            // Draw mode: spine preview
+            if (S.customSpine.length > 0) {
+                ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2; ctx.setLineDash([8, 4]);
+                ctx.beginPath();
+                const s0 = toScreen(S.customSpine[0]); ctx.moveTo(s0[0], s0[1]);
+                for (let i = 1; i < S.customSpine.length; i++) { const si = toScreen(S.customSpine[i]); ctx.lineTo(si[0], si[1]); }
+                ctx.stroke(); ctx.setLineDash([]);
+                // Points
+                S.customSpine.forEach((p, i) => {
+                    const sp = toScreen(p);
+                    ctx.fillStyle = i === S.hoverIdx ? '#fff' : '#58a6ff';
+                    ctx.beginPath(); ctx.arc(sp[0], sp[1], i === S.hoverIdx ? 7 : 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#8b949e'; ctx.font = '10px JetBrains Mono'; ctx.textAlign = 'center';
+                    ctx.fillText(`(${p[0].toFixed(1)}, ${p[1].toFixed(1)})`, sp[0], sp[1] - 12);
+                });
+            }
+
+            if (!S.data) {
+                if (S.customSpine.length === 0) {
+                    ctx.fillStyle = '#484f58'; ctx.font = '14px Inter'; ctx.textAlign = 'center';
+                    ctx.fillText('Draw a spine or select a preset, then Generate', cw / 2, ch / 2);
+                }
+                return;
+            }
+            const d = S.data;
+
+            // Corridors
+            ctx.fillStyle = '#2d333b'; ctx.strokeStyle = '#444c56'; ctx.lineWidth = 1;
+            for (const p of d.corridors) dPoly(p, true, true);
+
+            // Hub cores (skip one fused with staircase)
+            ctx.fillStyle = '#30404d'; ctx.strokeStyle = '#58a6ff55'; ctx.lineWidth = 1.5;
+            for (let i = 0; i < d.hubs.length; i++) {
+                if (d.staircase && d.staircase.coreHubIdx === i) continue; // part of stair core
+                const h = d.hubs[i];
+                if (h.boundary && h.boundary.length >= 3) dPoly(h.boundary, true, true);
+            }
+
+            // Rooms
+            if (S.showRooms) {
+                for (const r of d.rooms) {
+                    ctx.fillStyle = `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},0.35)`; dPoly(r.boundary, true, false);
+                    ctx.strokeStyle = `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},0.6)`; ctx.lineWidth = 1; ctx.setLineDash([]); dPoly(r.boundary, false, true);
+                    if (r.stroke.type !== 'none') {
+                        const sc = r.stroke.color; ctx.strokeStyle = `rgb(${sc[0]},${sc[1]},${sc[2]})`;
+                        ctx.lineWidth = Math.min(8, Math.max(1.5, r.stroke.weight * 0.5));
+                        if (r.stroke.type === 'dashed') ctx.setLineDash([10, 5]); else ctx.setLineDash([]);
+                        dPoly(r.boundary, false, true); ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            // Spine
+            if (S.showSpine && d.spine && d.spine.length >= 2) {
+                ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]);
+                ctx.beginPath(); const s0 = toScreen(d.spine[0]); ctx.moveTo(s0[0], s0[1]);
+                for (let i = 1; i < d.spine.length; i++) { const si = toScreen(d.spine[i]); ctx.lineTo(si[0], si[1]); }
+                ctx.stroke(); ctx.setLineDash([]);
+                ctx.fillStyle = '#58a6ff';
+                for (const p of d.spine) { const sp = toScreen(p); ctx.beginPath(); ctx.arc(sp[0], sp[1], 4, 0, Math.PI * 2); ctx.fill(); }
+            }
+
+            // Labels
+            if (S.showLabels) {
+                const fs = Math.max(10, Math.min(14, S.zoom * 0.5));
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                for (const r of d.rooms) {
+                    const bl = r.boundary.length;
+                    const cx = r.boundary.reduce((s, p) => s + p[0], 0) / bl, cy = r.boundary.reduce((s, p) => s + p[1], 0) / bl;
+                    const sp = toScreen([cx, cy]);
+                    ctx.fillStyle = r.merged ? '#dca830' : '#e6edf3'; ctx.font = `600 ${fs}px Inter`; ctx.fillText(r.label + (r.merged ? ' Ã¢Ëâ¦' : ''), sp[0], sp[1] - fs * 0.6);
+                    ctx.fillStyle = '#8b949e'; ctx.font = `${fs - 2}px JetBrains Mono`; ctx.fillText(r.area + ' mÃÂ²', sp[0], sp[1] + fs * 0.5);
+                }
+            }
+
+            // Dimensions
+            if (S.showDims) {
+                ctx.fillStyle = '#8b949e'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'center';
+                for (const r of d.rooms) {
+                    const b = r.boundary;
+                    for (let i = 0; i < b.length; i++) {
+                        const j = (i + 1) % b.length, sp1 = toScreen(b[i]), sp2 = toScreen(b[j]);
+                        const el = Math.sqrt((b[j][0] - b[i][0]) ** 2 + (b[j][1] - b[i][1]) ** 2).toFixed(2);
+                        ctx.fillText(el + 'm', (sp1[0] + sp2[0]) / 2, (sp1[1] + sp2[1]) / 2 - 6);
+                    }
+                }
+            }
+
+            // Hub labels (skip core hub)
+            for (let i = 0; i < d.hubs.length; i++) {
+                if (d.staircase && d.staircase.coreHubIdx === i) continue;
+                const h = d.hubs[i];
+                const sp = toScreen(h.vertex); ctx.fillStyle = '#58a6ff'; ctx.font = '10px Inter'; ctx.textAlign = 'center';
+                ctx.fillText('Ã¢Â¬Â¡ Hub', sp[0], sp[1] - 4);
+            }
+
+            // === STAIRCASE CORE ===
+            if (d.staircase) {
+                const sc = d.staircase;
+                // If there's a core hub, draw corridor-to-stair connection fill
+                if (sc.coreHubIdx >= 0 && d.hubs[sc.coreHubIdx]) {
+                    const ch = d.hubs[sc.coreHubIdx];
+                    ctx.fillStyle = 'rgba(210, 153, 34, 0.12)';
+                    ctx.strokeStyle = '#d2992244'; ctx.lineWidth = 1;
+                    if (ch.boundary && ch.boundary.length >= 3) dPoly(ch.boundary, true, true);
+                }
+                // Outer boundary fill
+                ctx.fillStyle = 'rgba(210, 153, 34, 0.25)';
+                dPoly(sc.boundary, true, false);
+                ctx.strokeStyle = '#d29922'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+                dPoly(sc.boundary, false, true);
+
+                // Landing
+                if (sc.landing) {
+                    ctx.fillStyle = 'rgba(210, 153, 34, 0.12)';
+                    dPoly(sc.landing, true, false);
+                    ctx.strokeStyle = '#d2992288'; ctx.lineWidth = 1;
+                    dPoly(sc.landing, false, true);
+                }
+                // Flight boundaries (for U-shape)
+                if (sc.flight1) {
+                    ctx.strokeStyle = '#d2992255'; ctx.lineWidth = 0.8;
+                    dPoly(sc.flight1, false, true);
+                }
+                if (sc.flight2) {
+                    ctx.strokeStyle = '#d2992255'; ctx.lineWidth = 0.8;
+                    dPoly(sc.flight2, false, true);
+                }
+                // Treads
+                const treads = sc.treads || [];
+                ctx.strokeStyle = '#d2992266'; ctx.lineWidth = 0.8;
+                for (const t of treads) {
+                    const s1 = toScreen(t[0]), s2 = toScreen(t[1]);
+                    ctx.beginPath(); ctx.moveTo(s1[0], s1[1]); ctx.lineTo(s2[0], s2[1]); ctx.stroke();
+                }
+                // Label
+                const scS = toScreen(sc.centroid);
+                ctx.fillStyle = '#d29922'; ctx.font = 'bold 12px Inter'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('Ã¢Â¬Â¡ STAIR CORE', scS[0], scS[1] - 12);
+                ctx.font = '9px JetBrains Mono';
+                ctx.fillText(sc.numRisers + 'R Ãâ ' + (sc.riser * 100).toFixed(1) + 'cm', scS[0], scS[1] + 2);
+                ctx.fillText((sc.tread * 100).toFixed(1) + 'cm tread ÃÂ· ' + (sc.type === 'u-shape' ? 'U-Shape' : 'Single'), scS[0], scS[1] + 14);
+            }
+
+            // === CIRCULATION STUDY ===
+            if (S.showCirc && d.staircase && d.circDistances) {
+                const stC = d.staircase.centroid;
+                for (let i = 0; i < d.rooms.length; i++) {
+                    const r = d.rooms[i];
+                    if (i >= d.circDistances.length) break;
+                    const cd = d.circDistances[i];
+                    const bl = r.boundary.length;
+                    const cx = r.boundary.reduce((s, p) => s + p[0], 0) / bl;
+                    const cy = r.boundary.reduce((s, p) => s + p[1], 0) / bl;
+                    const dist = cd.dist;
+                    let color;
+                    if (dist <= 15) color = '#3fb950';
+                    else if (dist <= 30) color = '#d29922';
+                    else color = '#f85149';
+                    ctx.fillStyle = color + '18';
+                    dPoly(r.boundary, true, false);
+                    ctx.strokeStyle = color + '50'; ctx.lineWidth = 1.5;
+                    dPoly(r.boundary, false, true);
+                    const rs = toScreen([cx, cy]);
+                    const ss = toScreen(stC);
+                    ctx.strokeStyle = color + '50'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(rs[0], rs[1]); ctx.lineTo(ss[0], ss[1]); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = color; ctx.font = 'bold 9px JetBrains Mono'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(dist.toFixed(1) + 'm', (rs[0] + ss[0]) / 2, (rs[1] + ss[1]) / 2 - 6);
+                }
+            }
+
+            // === RED CIRCLES at room intersection points ===
+            if (d.intersections && d.intersections.length > 0) {
+                for (const pt of d.intersections) {
+                    const sp = toScreen(pt);
+                    // Outer ring
+                    ctx.strokeStyle = '#f85149'; ctx.lineWidth = 2.5; ctx.setLineDash([]);
+                    ctx.beginPath(); ctx.arc(sp[0], sp[1], 28, 0, Math.PI * 2); ctx.stroke();
+                    // Inner glow ring
+                    ctx.strokeStyle = '#f8514944'; ctx.lineWidth = 8;
+                    ctx.beginPath(); ctx.arc(sp[0], sp[1], 28, 0, Math.PI * 2); ctx.stroke();
+                    // Cross-hair
+                    ctx.strokeStyle = '#f8514988'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(sp[0] - 6, sp[1]); ctx.lineTo(sp[0] + 6, sp[1]); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(sp[0], sp[1] - 6); ctx.lineTo(sp[0], sp[1] + 6); ctx.stroke();
+                    // Label
+                    ctx.fillStyle = '#f85149'; ctx.font = 'bold 8px Inter'; ctx.textAlign = 'center';
+                    ctx.fillText('MERGED', sp[0], sp[1] - 36);
+                }
+            }
+        }
+
+        function drawGrid(cw, ch) {
+            // Minor grid (1m)
+            const g1 = 1.0 * S.zoom;
+            if (g1 > 8) {
+                const sx1 = S.panX % g1, sy1 = S.panY % g1;
+                ctx.strokeStyle = '#1c232f'; ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                for (let x = sx1; x <= cw; x += g1) { ctx.moveTo(x, 0); ctx.lineTo(x, ch); }
+                for (let y = sy1; y <= ch; y += g1) { ctx.moveTo(0, y); ctx.lineTo(cw, y); }
+                ctx.stroke();
+            }
+
+            // Pillar 3: Structural Grid (3m module) 
+            if (S.showGrid) {
+                const g3 = 3.0 * S.zoom;
+                if (g3 > 15) {
+                    const sx3 = S.panX % g3, sy3 = S.panY % g3;
+                    ctx.strokeStyle = '#2d333b'; ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    for (let x = sx3; x <= cw; x += g3) { ctx.moveTo(x, 0); ctx.lineTo(x, ch); }
+                    for (let y = sy3; y <= ch; y += g3) { ctx.moveTo(0, y); ctx.lineTo(cw, y); }
+                    ctx.stroke();
+
+                    // Grid Labels
+                    ctx.fillStyle = '#484f58'; ctx.font = '9px JetBrains Mono'; ctx.textAlign = 'left';
+                    for (let x = sx3; x <= cw; x += g3) {
+                        const worldX = (x - S.panX) / S.zoom;
+                        ctx.fillText(`${worldX.toFixed(0)}m`, x + 4, 12);
+                    }
+                }
+            }
+        }
+
+        function dPoly(pts, fill, stroke) {
+            if (!pts || pts.length < 2) return;
+            ctx.beginPath(); const s0 = toScreen(pts[0]); ctx.moveTo(s0[0], s0[1]);
+            for (let i = 1; i < pts.length; i++) { const si = toScreen(pts[i]); ctx.lineTo(si[0], si[1]); }
+            ctx.closePath(); if (fill) ctx.fill(); if (stroke) ctx.stroke();
+        }
+
+        // --- Init ---
+        resize();
+        canvas.style.cursor = 'grab';
+        generate();
+    </script>
+</body>
+
+</html>
