@@ -72,6 +72,7 @@ def export_to_dwg(data, filename):
         msp.add_line(w['p1'], w['p2'], dxfattribs={'layer': 'A-GLAZ'})
 
     # Save as Binary DXF (often interpreted as DWG-ready by many viewers)
+    # Save as Binary DXF (often interpreted as DWG-ready by many viewers)
     # Note: True DWG requires a native converter, but this is the maximum possible.
-    doc.saveas(filename.replace(".dxf", ".dwg"))
-    return filename.replace(".dxf", ".dwg")
+    doc.saveas(filename)
+    return filename

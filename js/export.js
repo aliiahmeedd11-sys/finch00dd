@@ -225,11 +225,11 @@ document
     if (d.windows) d.windows.forEach((w) => addLine(w.p1, w.p2, "A-GLAZ"));
 
     dxf += `0\nENDSEC\n0\nEOF\n`;
-    const blob = new Blob([dxf], { type: "application/acad" });
+    const blob = new Blob([dxf], { type: "application/dxf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Finch_Design_Export.dwg`;
+    a.download = `Finch_CAD_Export.dxf`;
     a.click();
 
     setTimeout(() => {
