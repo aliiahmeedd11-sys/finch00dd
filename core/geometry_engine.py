@@ -135,20 +135,50 @@ class ElevatorShaft:
 # 4. PLATINUM PIPELINE
 # ══════════════════════════════════════════
 class GeometryPipeline:
-    def __init__(self, corridor_width=1.8, room_width=3.5, room_depth=5.0, floor_height=3.0, stair_width=1.2, num_floors=5, core_spacing=30.0, unit_mix=None):
+    # Module-based unit definitions (locked at 3.6m)
+    TYPE_LABELS  = {"studio": "Studio", "bed1": "1 Bedroom", "bed2": "2 Bedroom", "bed3": "3 Bedroom"}
+    TYPE_COLORS  = {"studio": (250, 204, 21), "bed1": (74, 222, 128), "bed2": (96, 165, 250), "bed3": (244, 114, 182)}
+
+    def __init__(self, corridor_width=1.8, room_width=3.6, room_depth=5.0, floor_height=3.0,
+                 stair_width=1.2, num_floors=5, core_spacing=30.0, unit_mix=None,
+                 module=3.6, module_widths=None):
         self.corridor_width = corridor_width
-        self.room_width = room_width
-        self.room_depth = room_depth
-        self.floor_height = floor_height
-        self.stair_width = stair_width
-        self.num_floors = num_floors
-        self.core_spacing = core_spacing
-        self.unit_mix = unit_mix or {"studio": 0.3, "bed1": 0.4, "bed2": 0.3}
+        self.room_width     = module           # base module (3.6m)
+        self.module         = module
+        # Per-type unit widths in metres
+        mw = module_widths or {"studio": 1, "bed1": 2, "bed2": 3, "bed3": 4}
+        self.unit_widths = {k: module * v for k, v in mw.items()}
+        self.room_depth     = room_depth
+        self.floor_height   = floor_height
+        self.stair_width    = stair_width
+        self.num_floors     = num_floors
+        self.core_spacing   = core_spacing
+        # Normalise unit_mix to a list of dicts
+        if isinstance(unit_mix, list) and unit_mix:
+            self.unit_mix = unit_mix
+        else:
+            self.unit_mix = [
+                {"type": "studio", "size": 45.0, "mix": 26.0, "color": "#FACC15", "balcLen": 2.0, "balcAlign": "center"},
+                {"type": "bed1",   "size": 60.0, "mix": 46.0, "color": "#4ADE80", "balcLen": 2.0, "balcAlign": "center"},
+                {"type": "bed2",   "size": 70.0, "mix": 25.0, "color": "#60A5FA", "balcLen": 2.0, "balcAlign": "center"},
+                {"type": "bed3",   "size": 85.0, "mix":  3.0, "color": "#F472B6", "balcLen": 2.0, "balcAlign": "center"},
+            ]
         self.building_height = self.num_floors * self.floor_height
         self.spine_pts = []
         self.hubs = []
         self.selected_unit_id = None
         self.reset()
+
+    def _build_type_sequence(self):
+        """Build an ordered list of unit types to cycle through, weighted by mix ratios."""
+        sequence = []
+        total_mix = sum(c.get("mix", 0) for c in self.unit_mix) or 100.0
+        for c in self.unit_mix:
+            pct = c.get("mix", 0) / total_mix
+            # At least 1 slot per active type, round proportionally
+            count = max(1, round(pct * 10)) if pct > 0 else 0
+            sequence.extend([c.get("type", "studio")] * count)
+        return sequence if sequence else ["studio", "bed1", "bed2", "bed3"]
 
     def reset(self):
         self.rooms, self.corridors, self.cores, self.vent_shafts = [], [], [], []
@@ -411,32 +441,77 @@ class GeometryPipeline:
 
                 for span_start, span_end in spans:
                     span_len = span_end - span_start
-                    if span_len < self.room_width: continue
-                    
-                    num_rooms = math.floor(span_len / self.room_width)
-                    if num_rooms <= 0: continue
-                    actual_w = span_len / num_rooms
-                    
-                    for j in range(num_rooms):
-                        t1, t2 = (span_start + j * actual_w) / L_seg, (span_start + (j+1) * actual_w) / L_seg
+                    if span_len < self.room_width: continue  # Less than 1 module, skip
+
+                    # === MODULE-BASED PACKING ===
+                    # Build a cycling sequence of unit types weighted by mix ratios
+                    type_seq = self._build_type_sequence()
+                    seq_idx  = 0
+                    curr_pos = span_start
+
+                    while curr_pos < span_end - self.room_width * 0.5:
+                        remaining = span_end - curr_pos
+
+                        # Pick the next unit type from the cycle
+                        unit_type = type_seq[seq_idx % len(type_seq)]
+                        seq_idx += 1
+                        unit_w = self.unit_widths.get(unit_type, self.room_width)
+
+                        # If the full module doesn't fit, fall back to studio (1 module)
+                        if remaining < unit_w * 0.85:
+                            unit_w = self.room_width  # 1 module fallback
+                            unit_type = "studio"
+                        if remaining < unit_w * 0.85:
+                            break   # Not even 1 module fits — stop
+
+                        # Clamp to remaining span (shouldn't exceed)
+                        use_w = min(unit_w, remaining)
+
+                        t1 = curr_pos / L_seg
+                        t2 = (curr_pos + use_w) / L_seg
                         v1_in, v2_in = (p1 + v_seg * t1).grid(), (p1 + v_seg * t2).grid()
                         v1_out, v2_out = (v1_in + v_orth * depth).grid(), (v2_in + v_orth * depth).grid()
-                        
+
                         poly = [v1_in, v2_in, v2_out, v1_out]
-                        room_obj = Room(poly, label=f"Unit {ri}")
-                        
+                        lbl   = self.TYPE_LABELS.get(unit_type, "Room")
+                        color = self.TYPE_COLORS.get(unit_type, (180, 200, 255))
+                        area  = abs(sum(
+                            poly[i][0]*poly[(i+1)%4][1] - poly[(i+1)%4][0]*poly[i][1]
+                            for i in range(4)
+                        )) / 2.0
+
+                        # Get config for balcony from unit_mix list
+                        cfg = next((c for c in self.unit_mix if c.get("type") == unit_type), {})
+
                         obs_list = self.static_obstacles + [r["boundary"] for r in self.rooms]
                         for c in self.cores:
-                            if "stair" in c and c["stair"]: obs_list.append(c["stair"]["boundary"])
+                            if "stair" in c and c["stair"]:    obs_list.append(c["stair"]["boundary"])
                             if "elevator" in c and c["elevator"]: obs_list.append(c["elevator"]["boundary"])
 
-                        if not any(Article82_Validator._sat_collision(room_obj.boundary, obs if isinstance(obs[0], (list, tuple)) else [p.as_tuple() for p in obs]) for obs in obs_list):
+                        has_collision = any(
+                            Article82_Validator._sat_collision(
+                                [pt.as_tuple() if hasattr(pt, "as_tuple") else pt for pt in poly],
+                                obs if isinstance(obs[0], (list, tuple)) else [p.as_tuple() for p in obs]
+                            )
+                            for obs in obs_list
+                        )
+
+                        if not has_collision:
                             self.rooms.append({
-                                "label": room_obj.label, "boundary": room_obj.boundary,
-                                "area": room_obj.area, "min_width": room_obj.min_width,
-                                "is_landlocked": False, "fill": (180, 200, 255)
+                                "label": lbl,
+                                "boundary": [pt.as_tuple() if hasattr(pt, "as_tuple") else list(pt) for pt in poly],
+                                "area": round(area, 1),
+                                "min_width": round(use_w, 2),
+                                "is_landlocked": False,
+                                "fill": color,
+                                "unit_type": unit_type,
+                                "modules": round(use_w / self.module, 2),
+                                "config": cfg,
                             })
                             ri += 1
+
+                        curr_pos += use_w
+
 
         if apply_zoning:
             self._apply_zoning()

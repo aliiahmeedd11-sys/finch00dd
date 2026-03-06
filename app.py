@@ -42,12 +42,14 @@ class ArchHandler(SimpleHTTPRequestHandler):
             params = json.loads(self.rfile.read(content_length) or b"{}")
 
             cw = float(params.get("corridor_width", 1.8))
-            rw = float(params.get("room_width", 3.5))
             rd = float(params.get("room_depth", 5.0))
             fh = float(params.get("floor_height", 3.0))
             sw = float(params.get("stair_width", 1.2))
             nf = int(params.get("num_floors", 5))
-            unit_mix = params.get("unit_mix", {"studio": 0.3, "bed1": 0.4, "bed2": 0.3})
+            unit_mix = params.get("unit_mix", [])
+            # Module system: 1 module = 3.6m (locked)
+            module = float(params.get("module", 3.6))
+            module_widths = params.get("module_widths", {"studio": 1, "bed1": 2, "bed2": 3, "bed3": 4})
 
             raw_pts = params.get("spine", []) or []
             lot_pts = params.get("lot_boundary", []) or []
@@ -59,12 +61,14 @@ class ArchHandler(SimpleHTTPRequestHandler):
 
             engine = GeometryPipeline(
                 corridor_width=cw,
-                room_width=rw,
+                room_width=module,          # base module = 3.6m
                 room_depth=rd,
                 floor_height=fh,
                 stair_width=sw,
                 num_floors=nf,
-                unit_mix=unit_mix
+                unit_mix=unit_mix,
+                module=module,
+                module_widths=module_widths
             )
 
             if lot_pts and len(lot_pts) >= 3:
