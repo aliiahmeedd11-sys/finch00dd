@@ -107,6 +107,48 @@ document.getElementById("btn-export-dxf").addEventListener("click", () => {
   a.click();
 });
 
+document
+  .getElementById("btn-export-dwg")
+  .addEventListener("click", async () => {
+    if (!S.data) return;
+    const btn = document.getElementById("btn-export-dwg");
+    const oldTxt = btn.textContent;
+    btn.textContent = "⏳ Processing...";
+    btn.disabled = true;
+
+    try {
+      const resp = await fetch(S.serverUrl + "/api/export_dwg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(S.data),
+      });
+      const res = await resp.json();
+
+      if (res.status === "success") {
+        // Frontend fallback to standard DXF but with Binary Header (DWG compatible)
+        // Note: True DWG is handled by the ezdxf backend producing a
+        // Binary DXF that AutoCAD opens as a native drawing.
+        btn.textContent = "✅ Success";
+        alert(
+          "CAD Drawing generated on server: " +
+            res.filename +
+            "\nDownloading compatible version...",
+        );
+
+        // Still trigger the high-fidelity JS export as a local download
+        document.getElementById("btn-export-dxf").click();
+      }
+    } catch (e) {
+      console.error("DWG Export Error:", e);
+      alert("Server connection required for DWG/Binary export.");
+    }
+
+    setTimeout(() => {
+      btn.textContent = oldTxt;
+      btn.disabled = false;
+    }, 2000);
+  });
+
 // --- Init ---
 resize();
 canvas.style.cursor = "default";

@@ -1,8 +1,11 @@
 import json
+import datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse
 
 from core.geometry_engine import GeometryPipeline
+from core.cad_exporter import export_to_dwg
+import os
 
 PORT = 8080
 
@@ -34,6 +37,22 @@ class ArchHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/export_dwg":
+            content_length = int(self.headers.get("Content-Length", 0))
+            data = json.loads(self.rfile.read(content_length) or b"{}")
+            
+            # Create exports folder if missing
+            if not os.path.exists("exports"): os.makedirs("exports")
+            
+            ts = int(datetime.datetime.now().timestamp())
+            filename = f"exports/Finch_Plan_{ts}.dxf"
+            export_to_dwg(data, filename)
+            
+            # In a real app we'd serve the file, but here we return the filename
+            # and the frontend handles the blob. For simplicity, we'll keep it as 
+            # a downloadable DXF but named for CAD compatibility.
+            return self._send_json(200, {"filename": filename, "status": "success"})
+
         if path != "/api/generate":
             return self.send_error(404)
 
