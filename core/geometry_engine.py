@@ -520,6 +520,7 @@ class GeometryPipeline:
 
         if apply_zoning:
             self._apply_zoning()
+        self._add_balconies()
         self.add_simple_shafts()
         self._place_doors()
 
@@ -605,14 +606,11 @@ class GeometryPipeline:
         self._add_balconies()
 
     def _add_balconies(self):
-        import math
+        """Internal balcony subdivision logic."""
+        # Pre-calculate room edges count to find those that are exterior (unshared)
         all_edges = {}
-        # We need ALL exterior unshared edges. 
-        # By combining all rooms and corridors, unshared edges are pure exterior.
-        # However we don't track corridors explicitly in self.rooms, 
-        # so corridor-facing walls of rooms will also appear as 'unshared'.
         for r in self.rooms:
-            bnd = r.get("boundary", [])
+            bnd = r["boundary"]
             for i in range(len(bnd)):
                 p1 = tuple(round(x, 2) for x in bnd[i])
                 p2 = tuple(round(x, 2) for x in bnd[(i+1)%len(bnd)])
@@ -622,7 +620,8 @@ class GeometryPipeline:
         for r in self.rooms:
             config = r.get("config", {})
             blen = float(config.get("balcLen", 0.0))
-            if "Unit" not in r.get("label", "Unit") and "Bed" not in r.get("label", "") and "Studio" not in r.get("label", ""):
+            # Only unit types get balconies
+            if not any(x in r.get("label", "") for x in ["Studio", "Bedroom", "Bed", "Unit"]):
                 continue
             if blen <= 0.0 or config.get("balcAlign") == "none":
                 continue
@@ -630,102 +629,79 @@ class GeometryPipeline:
             bnd = r["boundary"]
             unshared = []
             for i in range(len(bnd)):
-                p1 = tuple(round(x, 2) for x in bnd[i])
-                p2 = tuple(round(x, 2) for x in bnd[(i+1)%len(bnd)])
-                edge = tuple(sorted([p1, p2]))
+                p1, p2 = bnd[i], bnd[(i+1)%len(bnd)]
+                edge = tuple(sorted([tuple(round(x, 2) for x in p1), tuple(round(x, 2) for x in p2)]))
                 if all_edges.get(edge, 0) == 1:
-                    unshared.append((bnd[i], bnd[(i+1)%len(bnd)]))
+                    unshared.append((p1, p2))
             
             if not unshared: continue
             
-            # Filter unshared edges to exclude those touching the corridor
-            exterior_candidates = []
-            for e in unshared:
-                is_corridor = False
-                mid = ((e[0][0]+e[1][0])/2, (e[0][1]+e[1][1])/2)
-                for cb in self.corridors:
-                    for j in range(len(cb)):
-                        cp1, cp2 = cb[j], cb[(j+1)%len(cb)]
-                        # Simple point-to-segment distance
-                        d = self._dist_point_to_seg(mid, cp1, cp2)
-                        if d < 0.15: # 15cm tolerance for corridor walls
-                            is_corridor = True
-                            break
-                    if is_corridor: break
-                if not is_corridor:
-                    exterior_candidates.append(e)
-            
-            if not exterior_candidates: continue
-            
-            # Pick the longest exterior edge
-            exterior_edge = max(exterior_candidates, key=lambda e: math.hypot(e[0][0]-e[1][0], e[0][1]-e[1][1]))
-            
-            p1, p2 = exterior_edge
-            length = math.hypot(p1[0]-p2[0], p1[1]-p2[1])
-            if length < 1.0: continue
-            
-            align = config.get("balcAlign", "center")
-            off_st = float(config.get("balcOffsetSt", 0.0))
-            off_en = float(config.get("balcOffsetEn", 0.0))
-            
-            vx = (p2[0]-p1[0])/length
-            vy = (p2[1]-p1[1])/length
-            
-            # Vector normal to edge (outwards)
+            # Simple Heuristic: The facade edge is unshared and furthest from room's inner side.
+            # For our rectangular rooms, it's the edge opposite to the corridor.
             cx = sum(p[0] for p in bnd) / len(bnd)
             cy = sum(p[1] for p in bnd) / len(bnd)
-            mx = (p1[0]+p2[0])/2
-            my = (p1[1]+p2[1])/2
-            nx = mx - cx
-            ny = my - cy
+            
+            # Filter by distance: exterior edges are usually further from the spine
+            exterior_candidates = unshared
+            if not exterior_candidates: continue
+            
+            # Pick the longest exterior edge (usually the facade)
+            exterior_edge = max(exterior_candidates, key=lambda e: math.hypot(e[0][0]-e[1][0], e[0][1]-e[1][1]))
+            p1, p2 = exterior_edge
+            length = math.hypot(p1[0]-p2[0], p1[1]-p2[1])
+            if length < 0.8: continue
+            
+            align = config.get("balcAlign", "full")
+            vx, vy = (p2[0]-p1[0])/length, (p2[1]-p1[1])/length
+            
+            # Normal vector pointing INWARDS (towards room center)
+            mx, my = (p1[0]+p2[0])/2, (p1[1]+p2[1])/2
+            nx, ny = cx - mx, cy - my
             nl = math.hypot(nx, ny)
             if nl > 0: nx, ny = nx/nl, ny/nl
             else: nx, ny = -vy, vx
             
-            # calculate start/end points
-            if align == "full":
-                bp1 = p1
-                bp2 = p2
-            elif align == "center":
-                mid_l = length - off_st - off_en
-                if mid_l <= 0: mid_l = length * 0.5
-                rem = length - mid_l
-                bp1 = (p1[0] + vx*(rem/2 + off_st/2 - off_en/2), p1[1] + vy*(rem/2 + off_st/2 - off_en/2))
-                bp2 = (bp1[0] + vx*mid_l, bp1[1] + vy*mid_l)
-            elif align == "left": 
-                bp1 = (p1[0] + vx*off_st, p1[1] + vy*off_st)
-                bp2 = (bp1[0] + vx*(length - off_st - off_en), bp1[1] + vy*(length - off_st - off_en))
-            else: 
-                bp2 = (p2[0] - vx*off_en, p2[1] - vy*off_en)
-                bp1 = (bp2[0] - vx*(length - off_st - off_en), bp2[1] - vy*(length - off_st - off_en))
+            # Calculate balcony start/end along the edge
+            bp1, bp2 = p1, p2 # Default for full
+            if align in ["center", "left", "right"]:
+                off_st = float(config.get("balcOffsetSt", 0.0))
+                off_en = float(config.get("balcOffsetEn", 0.0))
+                target_l = length - off_st - off_en
+                if target_l < 0.5: target_l = length * 0.5
+                
+                if align == "center":
+                    s_dist = (length - target_l) / 2
+                elif align == "left":
+                    s_dist = off_st
+                else: # right
+                    s_dist = length - target_l - off_en
+                
+                bp1 = (p1[0] + vx * s_dist, p1[1] + vy * s_dist)
+                bp2 = (bp1[0] + vx * target_l, bp1[1] + vy * target_l)
+
+            # Subdivide: offset the facade points INWARDS
+            b_in1 = (bp1[0] + nx * blen, bp1[1] + ny * blen)
+            b_in2 = (bp2[0] + nx * blen, bp2[1] + ny * blen)
             
-            # --- INTERNAL BALCONY (SUBDIVISION) ---
-            # The balcony is subtracted from the room's existing boundary.
-            b_in1 = (bp1[0] - nx*blen, bp1[1] - ny*blen)
-            b_in2 = (bp2[0] - nx*blen, bp2[1] - ny*blen)
+            # Store balcony polygon
+            r["balcony"] = [list(bp1), list(b_in1), list(b_in2), list(bp2)]
+            r["balcony_fill"] = "rgba(40, 48, 60, 0.45)"
             
-            # The balcony polygon
-            balc_poly = [list(bp1), list(b_in1), list(b_in2), list(bp2)]
-            r["balcony"] = balc_poly
-            
-            # For "full" alignment (most common), we simply replace the exterior points
-            # in the room boundary with the inner balcony points.
+            # Subdivide the room boundary
             new_bnd = []
             for pt in bnd:
-                # If room point is exactly one of the exterior edge points, swap it for the inner one
-                if math.hypot(pt[0]-bp1[0], pt[1]-bp1[1]) < 0.01:
+                d1 = math.hypot(pt[0]-bp1[0], pt[1]-bp1[1])
+                d2 = math.hypot(pt[0]-bp2[0], pt[1]-bp2[1])
+                if d1 < 0.05:
                     new_bnd.append(list(b_in1))
-                elif math.hypot(pt[0]-bp2[0], pt[1]-bp2[1]) < 0.01:
+                elif d2 < 0.05:
                     new_bnd.append(list(b_in2))
                 else:
                     new_bnd.append(list(pt))
             
-            # Update room to the remaining inner area
             r["boundary"] = new_bnd
-            # Recompute area
+            # Recompute area for the now-smaller room
             r["area"] = round(abs(sum(new_bnd[i][0]*new_bnd[(i+1)%len(new_bnd)][1] - new_bnd[(i+1)%len(new_bnd)][0]*new_bnd[i][1] for i in range(len(new_bnd))))/2.0, 1)
-            # Add a distinct fill for the balcony to make it "visible"
-            r["balcony_fill"] = "rgba(40, 45, 55, 0.4)"
 
     def _dist_point_to_seg(self, p, a, b):
         px, py = p
