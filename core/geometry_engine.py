@@ -699,10 +699,13 @@ class GeometryPipeline:
                 bp2 = (p2[0] - vx*off_en, p2[1] - vy*off_en)
                 bp1 = (bp2[0] - vx*(length - off_st - off_en), bp2[1] - vy*(length - off_st - off_en))
             
-            b_out1 = (bp1[0] + nx*blen, bp1[1] + ny*blen)
-            b_out2 = (bp2[0] + nx*blen, bp2[1] + ny*blen)
+            # --- INTERNAL BALCONY FIX ---
+            # Offset INWARDS (opposite of normal nx)
+            b_in1 = (bp1[0] - nx*blen, bp1[1] - ny*blen)
+            b_in2 = (bp2[0] - nx*blen, bp2[1] - ny*blen)
             
-            r["balcony"] = [list(bp1), list(b_out1), list(b_out2), list(bp2)]
+            # Balcony polygon is formed by the exterior edge and the inner divider line
+            r["balcony"] = [list(bp1), list(b_in1), list(b_in2), list(bp2)]
 
     def _dist_point_to_seg(self, p, a, b):
         px, py = p
