@@ -214,15 +214,20 @@ class GeometryPipeline:
         spacing = round(self.core_spacing / module_step) * module_step
         if spacing < module_step: spacing = module_step
 
-        def place_core(p, d, label, side_name, origin_edge):
-            direction_out = Point(-d.y, d.x) if side_name == "L" else Point(d.y, -d.x)
+        def place_core_instance(origin_pt, spine_dir, side_name, core_idx):
+            # spine_dir is the direction *along* the spine segment
+            # origin_pt is the point on the corridor edge (nodes_L or nodes_R)
             
-            stair = StaircaseCore(origin_edge, direction_out, d, self.stair_width, self.floor_height)
-            core = {"label": label, "station_m": 0.0, "side": side_name, "stair": vars(stair), "elevator": None}
+            # direction_out is perpendicular to the spine, pointing away from the corridor
+            direction_out = Point(-spine_dir.y, spine_dir.x) if side_name == "L" else Point(spine_dir.y, -spine_dir.x)
+            
+            stair = StaircaseCore(origin_pt, direction_out, spine_dir, self.stair_width, self.floor_height)
+            core = {"label": f"Service Core {core_idx}", "station_m": 0.0, "side": side_name, "stair": vars(stair), "elevator": None}
             
             elev = None
             if self.num_floors > 4:
-                elev = ElevatorShaft(origin_edge + d * stair.total_width, direction_out, d)
+                # Elevator is placed adjacent to the stair, further out from the corridor
+                elev = ElevatorShaft(origin_pt + spine_dir * stair.total_width, direction_out, spine_dir)
                 core["elevator"] = vars(elev)
 
             self.cores.append(core)
@@ -233,11 +238,11 @@ class GeometryPipeline:
 
             # Envelope for Visual/Zoning
             core_offset = stair.total_width + (elev.shaftW if elev else 0.0)
-            cp1 = origin_edge
-            cp2 = cp1 + d * core_offset
+            cp1 = origin_pt
+            cp2 = cp1 + spine_dir * core_offset
             cp3 = cp2 + direction_out * stair.total_len
             cp4 = cp1 + direction_out * stair.total_len
-            core_env = Room([cp1.grid(), cp2.grid(), cp3.grid(), cp4.grid()], label=f"Service Core {len(self.cores)}")
+            core_env = Room([cp1.grid(), cp2.grid(), cp3.grid(), cp4.grid()], label=f"Service Core {core_idx}")
             
             self.rooms.append({
                 "label": core_env.label,
@@ -249,33 +254,85 @@ class GeometryPipeline:
             })
             self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
 
-        # Walk each straight segment independently to avoid corners
+        core_counter = 1
+        # Walk each straight segment independently
         for i in range(len(pts)-1):
-            p1, p2 = pts[i], pts[i+1]
-            seg_vec = p2 - p1
+            p_spine_start, p_spine_end = pts[i], pts[i+1]
+            seg_vec = p_spine_end - p_spine_start
             seg_len = seg_vec.length()
-            if seg_len < 5.0: continue
             
-            d = seg_vec.normalised()
-            n = Point(-d.y, d.x)
+            if seg_len < 1e-6: continue # Skip zero-length segments
+
+            spine_dir = seg_vec.normalised()
             
-            # Safe zone bounds: avoid placing cores near the actual corners (leave room depth + tolerance for corner units)
-            safe_margin = self.room_depth + 1.0 # Buffer from the corner
-            if seg_len <= safe_margin * 2:
-                # Segment too short to have a core safely, put it strictly in the exact middle
-                mid_p = p1 + d * (seg_len / 2.0)
-                left_edge = (mid_p + n * hw).grid()
-                place_core(mid_p, d, f"Service Core {len(self.cores)+1}", "L", left_edge)
+            # Corridor edge points for this segment
+            p_L_start, p_L_end = nodes_L[i], nodes_L[i+1]
+            p_R_start, p_R_end = nodes_R[i], nodes_R[i+1]
+
+            # Safe zone bounds: avoid placing cores too close to segment ends (corners)
+            # A core needs at least its total_len along the spine direction.
+            # Let's assume a minimum required length for a core footprint.
+            min_core_footprint_len = EgyptianCode.STAIR_MIN_TREAD * EgyptianCode.STAIR_MAX_RISERS_PER_FLIGHT + self.stair_width + 1.0 # Approx. 0.27*14 + 1.2 + 1 = 3.78 + 1.2 + 1 = ~6m
+            
+            # Ensure there's enough space for at least one core
+            if seg_len < min_core_footprint_len * 1.5: # If segment is too short for proper spacing, place one in the middle
+                mid_dist = seg_len / 2.0
+                
+                # Place on Left side
+                origin_L = p_L_start + spine_dir * mid_dist
+                place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
+                core_counter += 1
+
+                # Place on Right side
+                origin_R = p_R_start + spine_dir * mid_dist
+                place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
+                core_counter += 1
                 continue
 
             # Place periodic cores along the straight span
-            s = safe_margin
-            while s <= seg_len - safe_margin + 1e-6:
-                curr_p = p1 + d * s
-                # Default map to Left side for now
-                left_edge = (curr_p + n * hw).grid()
-                place_core(curr_p, d, f"Service Core {len(self.cores)+1}", "L", left_edge)
-                s += spacing
+            # Start placement after a buffer from the start of the segment
+            # End placement before a buffer from the end of the segment
+            buffer_from_end = min_core_footprint_len / 2.0 # Half core length as buffer
+            
+            # Calculate the effective length for core placement
+            effective_len = seg_len - (2 * buffer_from_end)
+            
+            if effective_len <= 0: # Segment too short even for buffered placement
+                # This case should be handled by the `seg_len < min_core_footprint_len * 1.5` check above,
+                # but as a safeguard, if we reach here and effective_len is non-positive, skip.
+                continue
+
+            # Calculate number of cores that can fit
+            num_cores_possible = max(1, math.floor(effective_len / spacing))
+            
+            # Distribute cores evenly within the effective length
+            if num_cores_possible == 1:
+                # Place one core in the middle of the effective length
+                current_dist = buffer_from_end + effective_len / 2.0
+            else:
+                # Place multiple cores, starting from buffer_from_end
+                # and spacing them out.
+                # Adjust spacing slightly to fit exactly num_cores_possible
+                # if the original spacing doesn't divide perfectly.
+                actual_spacing = effective_len / (num_cores_possible - 1) if num_cores_possible > 1 else 0
+                if actual_spacing == 0: actual_spacing = spacing # Fallback for single core case
+
+            for k in range(num_cores_possible):
+                if num_cores_possible == 1:
+                    current_dist = buffer_from_end + effective_len / 2.0
+                else:
+                    current_dist = buffer_from_end + k * actual_spacing
+
+                # Place on Left side
+                origin_L = p_L_start + spine_dir * current_dist
+                place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
+                core_counter += 1
+
+                # Place on Right side
+                origin_R = p_R_start + spine_dir * current_dist
+                place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
+                core_counter += 1
+
 
     def process_boundary(self, boundary: List[List[float]], setbacks: float = 3.0, apply_zoning=False):
         """Generates a floor plan by automatically determining a spine from the lot boundary."""
