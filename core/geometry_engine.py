@@ -261,17 +261,13 @@ class GeometryPipeline:
         total_len = sum(seg_lengths)
         if total_len < 1e-6: return
 
-        # How many cores do we need for the total building length?
-        num_cores = max(1, round(total_len / spacing))
-        
         # Determine ideal positions along the entire continuous spline
+        # We start from 0.0 (the corner/start) and increment by spacing
         target_dists = []
-        if num_cores == 1:
-            target_dists.append(total_len / 2.0)
-        else:
-            step = total_len / num_cores
-            for k in range(num_cores):
-                target_dists.append((k + 0.5) * step)  # Centered in their chunk
+        curr_d = 0.0
+        while curr_d < total_len + 0.1:
+            target_dists.append(curr_d)
+            curr_d += spacing
                 
         for dist_along_spline in target_dists:
             # 1. Find which segment this distance falls into
