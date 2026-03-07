@@ -250,7 +250,7 @@ class GeometryPipeline:
                 "area": core_env.area,
                 "min_width": core_env.min_width,
                 "is_landlocked": False,
-                "fill": (210, 215, 220)
+                "fill": (254, 240, 138) # Yellowish to match core identity
             })
             self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
 
@@ -309,11 +309,8 @@ class GeometryPipeline:
             spine_dir = (pts[seg_idx+1] - pts[seg_idx]).normalised()
             
             origin_L = wL_start + (wL_end - wL_start) * t
-            origin_R = wR_start + (wR_end - wR_start) * t
-
+            # Only place on one side as requested
             place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
-            core_counter += 1
-            place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
             core_counter += 1
 
 
@@ -416,86 +413,9 @@ class GeometryPipeline:
             })
             self.static_obstacles.append([Point(px, py) for px, py in stair.boundary])
 
-        # 4. CORNER UNIT GENERATION
-        # Explicitly map the left/right intersection volumes (green/brown gaps)
-        # to ensure they are 100% occupied before standard room packing starts.
-        for i in range(1, len(pts)-1):
-            p1, p_cen, p2 = pts[i-1], pts[i], pts[i+1]
-            v1 = (p_cen - p1).normalised()
-            v2 = (p2 - p_cen).normalised()
-            cross = v1.x * v2.y - v1.y * v2.x
-            is_left_turn = (cross > 0)
-            
-            # The corner geometry consists of the intersection of two orthogonal bands.
-            # We connect the outer corner of the room depths to the miter joint.
-            n1 = miter_dirs[i-1] # (Using miter_dirs is approximate for segments, let's use exact normals)
-            n_in_1 = Point(-v1.y, v1.x)
-            n_in_2 = Point(-v2.y, v2.x)
-            
-            # Distance from centerline to the outer wall of rooms is hw + depth
-            overall_depth = hw + self.room_depth
-            
-            # Left side Corner
-            # Ray 1: p1 -> p_cen, shifted left by overall_depth
-            # Ray 2: p_cen -> p2, shifted left by overall_depth
-            # Intersection is the far corner tip.
-            bisector_L = (v1 + v2).normalised()
-            m_L = Point(-bisector_L.y, bisector_L.x)
-            dot_L = m_L.dot(n_in_1)
-            scale_L = overall_depth / max(0.1, dot_L)
-            far_pt_L = p_cen + m_L * scale_L
-            
-            # The 4 points forming the Left Corner Unit
-            c_poly_L = [
-                nodes_L[i],                            # Miter point at corridor edge
-                (nodes_L[i] - v1 * self.room_depth),   # Project backward along segment 1
-                far_pt_L,                              # The far intersecting corner
-                (nodes_L[i] + v2 * self.room_depth)    # Project forward along segment 2
-            ]
-            
-            # Right side Corner
-            bisector_R = (v1 + v2).normalised()
-            m_R = Point(bisector_R.y, -bisector_R.x) # Right side bisector
-            n_out_1 = Point(v1.y, -v1.x) # Right normal
-            dot_R = m_R.dot(n_out_1)
-            scale_R = overall_depth / max(0.1, dot_R)
-            far_pt_R = p_cen + m_R * scale_R
-            
-            c_poly_R = [
-                nodes_R[i],                            # Miter point at corridor edge
-                (nodes_R[i] - v1 * self.room_depth),
-                far_pt_R,
-                (nodes_R[i] + v2 * self.room_depth)
-            ]
-            
-            # Only generate a unit on the "Outside" of the turn to form a clean L-shape,
-            # or on both if there's enough room. Simplest rule: inside corners get badly
-            # pinched, we just generate on both sides and let collision detection handle overlap.
-            for side_name, poly, turn_condition in [("L", c_poly_L, is_left_turn), ("R", c_poly_R, not is_left_turn)]:
-                # Visual type colors: Outer (green) vs Inner (brown)
-                # Left turn -> Right is outer (green). Right turn -> Left is outer (green).
-                is_outer = (side_name == "R" and is_left_turn) or (side_name == "L" and not is_left_turn)
-                color = (74, 222, 128) if is_outer else (165, 42, 42)
-                lbl = "Corner Unit (Outer)" if is_outer else "Corner Unit (Inner)"
-
-                bnd = [pt.as_tuple() for pt in poly]
-                area = self._calc_area(poly)
-                if area > 10.0:
-                    self.rooms.append({
-                        "label": lbl,
-                        "boundary": list(bnd),
-                        "area": round(area, 1),
-                        "min_width": round(self.room_depth, 2),
-                        "is_landlocked": False,
-                        "fill": color,
-                        "unit_type": "bed2" if area > 60 else "studio",
-                        "modules": round(area / (self.room_depth * self.module), 1),
-                        "config": {}
-                    })
-                    self.static_obstacles.append(poly)
-
-
-        # 5. ROOM PACKING (Zero-Overlap Butt-Joints)
+        # 4. ROOM PACKING (Zero-Overlap Butt-Joints)
+        # We fill corners using an "Overshoot" method: segments look for space 
+        # beyond their own length to fill junctions with modular units.
         ri = 1
         depth = self.room_depth
 
@@ -505,17 +425,28 @@ class GeometryPipeline:
             
             for i in range(len(segs)):
                 p1, p2 = path[i], path[i+1]
-                n1, n2 = norms[i], norms[i+1]
                 v_seg = p2 - p1
                 L_seg = v_seg.length()
                 if L_seg < 1.0: continue
 
                 vd = v_seg.normalised()
                 v_orth = Point(-vd.y, vd.x) if side == "L" else Point(vd.y, -vd.x)
-                band_poly = [p1.as_tuple(), p2.as_tuple(), (p2 + v_orth*depth).as_tuple(), (p1 + v_orth*depth).as_tuple()]
+                
+                # OVERSHOOT RANGE: Search for space up to 'depth' beyond segment ends
+                # This allows filling corner voids with standard modules.
+                search_start = -depth
+                search_end   = L_seg + depth
+                band_poly = [(p1 + vd * search_start).as_tuple(), 
+                            (p1 + vd * search_end).as_tuple(), 
+                            (p1 + vd * search_end + v_orth*depth).as_tuple(), 
+                            (p1 + vd * search_start + v_orth*depth).as_tuple()]
                 
                 blocked_intervals = []
-                for obs in self.static_obstacles:
+                # Check against ALL obstacles (hubs, corridors, cores, AND rooms from previous segments)
+                all_obs = self.static_obstacles + [r["boundary"] for r in self.rooms]
+                
+                for obs in all_obs:
+                    if not obs: continue
                     obs_tuples = [p.as_tuple() if hasattr(p, 'as_tuple') else tuple(p) for p in obs]
                     if Article82_Validator._sat_collision(band_poly, obs_tuples):
                         obs_pts = [Point(pt[0], pt[1]) for pt in obs_tuples]
@@ -523,12 +454,9 @@ class GeometryPipeline:
                         proj_depth = [(p - p1).dot(v_orth) for p in obs_pts]
                         
                         if min(proj_depth) > depth + 0.1 or max(proj_depth) < -0.1:
-                            pass # False positive or outside the band completely
+                            pass
                         else:
-                            # Expand blockage by small tolerance for safe clearance
-                            min_t, max_t = min(proj_t) - 0.05, max(proj_t) + 0.05
-                            min_t = max(0.0, min_t)
-                            max_t = min(L_seg, max_t)
+                            min_t, max_t = min(proj_t) - 0.01, max(proj_t) + 0.01
                             if max_t > min_t:
                                 blocked_intervals.append((min_t, max_t))
                             
@@ -545,94 +473,68 @@ class GeometryPipeline:
                     merged.append((curr_s, curr_e))
                     
                 spans = []
-                curr_ptr = 0.05
+                curr_ptr = search_start
                 for s_b, e_b in merged:
                     if s_b > curr_ptr + 1e-3:
                         spans.append((curr_ptr, s_b))
                     curr_ptr = e_b
-                if curr_ptr < L_seg - 0.05:
-                    spans.append((curr_ptr, L_seg - 0.05))
+                if curr_ptr < search_end:
+                    spans.append((curr_ptr, search_end))
 
                 for span_start, span_end in spans:
                     span_len = span_end - span_start
-                    if span_len < self.room_width: continue  # Less than 1 module, skip
+                    if span_len < self.room_width * 0.8: continue
 
-                    # === MODULE-BASED PACKING ===
-                    # Build a cycling sequence of unit types weighted by mix ratios
                     type_seq = self._build_type_sequence()
                     seq_idx  = 0
                     curr_pos = span_start
 
                     while curr_pos < span_end - 0.1:
                         remaining = span_end - curr_pos
-
-                        # Pick the next unit type from the cycle
                         unit_type = type_seq[seq_idx % len(type_seq)]
                         unit_w = self.unit_widths.get(unit_type, self.room_width)
                         
-                        # Gap Closing: If the remaining space is small, stretch this unit to fill it
-                        # Or if we have a little more than 1 module left, just make a Studio.
                         if remaining < unit_w + (self.room_width * 0.5):
-                           # If what's left is less than 1.5 modules, this is our LAST room in the span
                            use_w = remaining
-                           # Use the largest type that fits as the label
                            if use_w < self.room_width * 1.5: unit_type = "studio"
                            elif use_w < self.room_width * 2.5: unit_type = "bed1"
-                           elif use_w < self.room_width * 3.5: unit_type = "bed2"
-                           else: unit_type = "bed3"
+                           else: unit_type = "bed2"
                         else:
                            use_w = unit_w
                            seq_idx += 1
 
-                        if use_w < self.room_width * 0.5: break # sanity check
+                        if use_w < self.room_width * 0.5: break
 
-                        t1 = curr_pos / L_seg
-                        t2 = (curr_pos + use_w) / L_seg
-                        v1_in, v2_in = (p1 + v_seg * t1).grid(), (p1 + v_seg * t2).grid()
+                        t1, t2 = curr_pos, curr_pos + use_w
+                        v1_in, v2_in = (p1 + vd * t1).grid(), (p1 + vd * t2).grid()
                         v1_out, v2_out = (v1_in + v_orth * depth).grid(), (v2_in + v_orth * depth).grid()
 
                         poly = [v1_in, v2_in, v2_out, v1_out]
-                        lbl   = self.TYPE_LABELS.get(unit_type, "Room")
-                        color = self.TYPE_COLORS.get(unit_type, (180, 200, 255))
+                        # If the room center is outside the 0..L_seg range, it's a Corner Unit filler
+                        mid_t = curr_pos + use_w/2
+                        is_corner_filler = (mid_t < -0.01 or mid_t > L_seg + 0.01)
+                        
+                        lbl = "Corner Unit" if is_corner_filler else self.TYPE_LABELS.get(unit_type, "Unit")
+                        color = (74, 222, 128) if is_corner_filler else self.TYPE_COLORS.get(unit_type, (180, 200, 255))
 
-                        # Convert Point objects → tuples FIRST (Points don't support subscript)
-                        bnd = [pt.as_tuple() if hasattr(pt, "as_tuple") else tuple(pt) for pt in poly]
-                        # Shoelace area on tuples
-                        area = abs(sum(
-                            bnd[i][0] * bnd[(i+1) % 4][1] - bnd[(i+1) % 4][0] * bnd[i][1]
-                            for i in range(4)
-                        )) / 2.0
-
-                        # Get config for balcony from unit_mix list
+                        bnd = [pt.as_tuple() for pt in poly]
+                        area = abs(sum(bnd[j][0]*bnd[(j+1)%4][1] - bnd[(j+1)%4][0]*bnd[j][1] for j in range(4)))/2.0
                         cfg = next((c for c in self.unit_mix if c.get("type") == unit_type), {})
 
-                        obs_list = list(self.static_obstacles) + [r["boundary"] for r in self.rooms]
-                        for c in self.cores:
-                            if "stair" in c and c["stair"]:       obs_list.append(c["stair"]["boundary"])
-                            if "elevator" in c and c["elevator"]: obs_list.append(c["elevator"]["boundary"])
-
-                        has_collision = False
-                        for obs in obs_list:
-                            if not obs:
-                                continue
-                            obs_as_tuples = obs if isinstance(obs[0], (list, tuple)) else [p.as_tuple() for p in obs]
-                            if Article82_Validator._sat_collision(list(bnd), obs_as_tuples):
-                                has_collision = True
-                                break
-
-                        if not has_collision:
-                            self.rooms.append({
-                                "label": lbl,
-                                "boundary": [list(pt) for pt in bnd],
-                                "area": round(area, 1),
-                                "min_width": round(use_w, 2),
-                                "is_landlocked": False,
-                                "fill": color,
-                                "unit_type": unit_type,
-                                "modules": round(use_w / self.module, 2),
-                                "config": cfg,
-                            })
-                            ri += 1
+                        new_room = {
+                            "id": f"R-{side}-{i}-{ri}",
+                            "label": lbl,
+                            "boundary": bnd,
+                            "area": round(area, 1),
+                            "min_width": round(use_w, 2),
+                            "is_landlocked": False,
+                            "fill": color,
+                            "unit_type": "corner" if is_corner_filler else unit_type,
+                            "modules": round(use_w / self.module, 2),
+                            "config": cfg,
+                        }
+                        self.rooms.append(new_room)
+                        ri += 1
 
                         curr_pos += use_w
 
