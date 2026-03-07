@@ -458,7 +458,8 @@ class GeometryPipeline:
                         elif min(proj_depth) > depth + 0.1:
                             pass
                         else:
-                            min_t, max_t = min(proj_t) - 0.01, max(proj_t) + 0.01
+                            # Use tiny 1mm epsilon for perfect modular joints
+                            min_t, max_t = min(proj_t) - 0.001, max(proj_t) + 0.001
                             if max_t > min_t:
                                 blocked_intervals.append((min_t, max_t))
                             
@@ -513,7 +514,7 @@ class GeometryPipeline:
 
                         poly = [v1_in, v2_in, v2_out, v1_out]
                         mid_t = curr_pos + use_w/2
-                        is_corner_filler = (mid_t < -0.01 or mid_t > L_seg + 0.01)
+                        is_corner_filler = (mid_t < -0.001 or mid_t > L_seg + 0.001)
                         
                         lbl = "Corner Unit" if is_corner_filler else self.TYPE_LABELS.get(unit_type, "Unit")
                         color = (74, 222, 128) if is_corner_filler else self.TYPE_COLORS.get(unit_type, (180, 200, 255))
@@ -549,8 +550,9 @@ class GeometryPipeline:
         if not self.rooms or not self.cores:
             return
 
-        base_units = [r for r in self.rooms if "Unit" in r["label"]]
-        cores = [r for r in self.rooms if "Unit" not in r["label"]]
+        # CRITICAL: Exempt Corner Units from zoning merger to preserve their Green/Brown modular identity.
+        base_units = [r for r in self.rooms if "Unit" in r["label"] and r.get("unit_type") != "corner"]
+        cores = [r for r in self.rooms if r not in base_units]
         if not base_units: return
 
         # target config list
