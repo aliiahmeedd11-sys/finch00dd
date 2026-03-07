@@ -415,9 +415,12 @@ class GeometryPipeline:
         ri = 1
         depth = self.room_depth
 
+        # LOCAL obstacle registry. Every room placed is added here immediately,
+        # so the next segment sees it and stops forming a clean butt-joint.
+        occupied_polys = list(self.static_obstacles)
+
         for side in ["L", "R"]:
             path = nodes_L if side == "L" else nodes_R
-            norms = miter_dirs if side == "L" else [n * -1 for n in miter_dirs]
             
             for i in range(len(segs)):
                 p1, p2 = path[i], path[i+1]
@@ -428,114 +431,109 @@ class GeometryPipeline:
                 vd = v_seg.normalised()
                 v_orth = Point(-vd.y, vd.x) if side == "L" else Point(vd.y, -vd.x)
                 
-                # OVERSHOOT RANGE: Only overshoot at INTERNAL corners (where segment has neighbors)
-                # This prevents gaps at building ends while filling miter joints.
+                # Only overshoot at internal joins (not at building start or end)
                 search_start = -depth if i > 0 else 0.0
                 search_end   = L_seg + depth if i < len(segs)-1 else L_seg
                 
-                band_poly = [(p1 + vd * search_start).as_tuple(), 
-                            (p1 + vd * search_end).as_tuple(), 
-                            (p1 + vd * search_end + v_orth*depth).as_tuple(), 
-                            (p1 + vd * search_start + v_orth*depth).as_tuple()]
+                band_poly = [
+                    (p1 + vd * search_start).as_tuple(),
+                    (p1 + vd * search_end).as_tuple(),
+                    (p1 + vd * search_end + v_orth*depth).as_tuple(),
+                    (p1 + vd * search_start + v_orth*depth).as_tuple()
+                ]
                 
                 blocked_intervals = []
-                # Check against ALL obstacles. 
-                # CRITICAL: We MUST ignore rooms that are purely "behind" this corridor wall (depth < 0)
-                all_obs = self.static_obstacles + [r["boundary"] for r in self.rooms]
-                
-                for obs in all_obs:
+                for obs in occupied_polys:
                     if not obs: continue
                     obs_tuples = [p.as_tuple() if hasattr(p, 'as_tuple') else tuple(p) for p in obs]
                     if Article82_Validator._sat_collision(band_poly, obs_tuples):
-                        obs_pts = [Point(pt[0], pt[1]) for pt in obs_tuples]
-                        proj_t = [(p - p1).dot(vd) for p in obs_pts]
-                        proj_depth = [(p - p1).dot(v_orth) for p in obs_pts]
+                        obs_pts   = [Point(pt[0], pt[1]) for pt in obs_tuples]
+                        proj_t    = [(p - p1).dot(vd) for p in obs_pts]
+                        proj_d    = [(p - p1).dot(v_orth) for p in obs_pts]
                         
-                        # Only block if the obstacle is actually "in front" of the corridor wall
-                        # (proj_depth > 0.1). If it's behind (negative or near-zero), ignore it.
-                        if max(proj_depth) < 0.1:
-                            pass
-                        elif min(proj_depth) > depth + 0.1:
-                            pass
-                        else:
-                            # Use tiny 1mm epsilon for perfect modular joints
-                            min_t, max_t = min(proj_t) - 0.001, max(proj_t) + 0.001
-                            if max_t > min_t:
-                                blocked_intervals.append((min_t, max_t))
+                        # Ignore obstacles entirely behind the corridor wall
+                        if max(proj_d) < 0.05 or min(proj_d) > depth + 0.05:
+                            continue
+                        
+                        t_min = min(proj_t)
+                        t_max = max(proj_t)
+                        if t_max > t_min:
+                            blocked_intervals.append((t_min, t_max))
                             
                 blocked_intervals.sort()
                 merged = []
                 if blocked_intervals:
-                    curr_s, curr_e = blocked_intervals[0]
-                    for s_b, e_b in blocked_intervals[1:]:
-                        if s_b <= curr_e + 1e-3:
-                            curr_e = max(curr_e, e_b)
+                    cs, ce = blocked_intervals[0]
+                    for s, e in blocked_intervals[1:]:
+                        if s <= ce + 1e-4: ce = max(ce, e)
                         else:
-                            merged.append((curr_s, curr_e))
-                            curr_s, curr_e = s_b, e_b
-                    merged.append((curr_s, curr_e))
+                            merged.append((cs, ce)); cs, ce = s, e
+                    merged.append((cs, ce))
                     
                 spans = []
-                curr_ptr = search_start
-                for s_b, e_b in merged:
-                    if s_b > curr_ptr + 1e-3:
-                        spans.append((curr_ptr, s_b))
-                    curr_ptr = e_b
-                if curr_ptr < search_end:
-                    spans.append((curr_ptr, search_end))
+                ptr = search_start
+                for s, e in merged:
+                    if s > ptr + 1e-4:
+                        spans.append((ptr, s))
+                    ptr = e
+                if ptr < search_end - 1e-4:
+                    spans.append((ptr, search_end))
+
+                type_seq = self._build_type_sequence()
+                seq_idx  = 0
 
                 for span_start, span_end in spans:
                     span_len = span_end - span_start
-                    if span_len < self.room_width * 0.8: continue
+                    if span_len < self.module * 0.8: continue
 
-                    type_seq = self._build_type_sequence()
-                    seq_idx  = 0
                     curr_pos = span_start
 
-                    while curr_pos < span_end - 0.1:
+                    while curr_pos < span_end - 0.05:
                         remaining = span_end - curr_pos
                         unit_type = type_seq[seq_idx % len(type_seq)]
-                        unit_w = self.unit_widths.get(unit_type, self.room_width)
+                        unit_w    = self.unit_widths.get(unit_type, self.module)
                         
-                        if remaining < unit_w + (self.room_width * 0.5):
-                           use_w = remaining
-                           if use_w < self.room_width * 1.5: unit_type = "studio"
-                           elif use_w < self.room_width * 2.5: unit_type = "bed1"
-                           else: unit_type = "bed2"
+                        if remaining < unit_w + self.module * 0.4:
+                            use_w = remaining
+                            if   use_w < self.module * 1.5: unit_type = "studio"
+                            elif use_w < self.module * 2.5: unit_type = "bed1"
+                            else:                           unit_type = "bed2"
                         else:
-                           use_w = unit_w
-                           seq_idx += 1
+                            use_w = unit_w
+                            seq_idx += 1
 
-                        if use_w < self.room_width * 0.5: break
+                        if use_w < self.module * 0.4: break
 
                         t1, t2 = curr_pos, curr_pos + use_w
-                        v1_in, v2_in = (p1 + vd * t1).grid(), (p1 + vd * t2).grid()
-                        v1_out, v2_out = (v1_in + v_orth * depth).grid(), (v2_in + v_orth * depth).grid()
+                        v1_in  = (p1 + vd * t1).grid()
+                        v2_in  = (p1 + vd * t2).grid()
+                        v1_out = (v1_in + v_orth * depth).grid()
+                        v2_out = (v2_in + v_orth * depth).grid()
 
-                        poly = [v1_in, v2_in, v2_out, v1_out]
-                        mid_t = curr_pos + use_w/2
-                        is_corner_filler = (mid_t < -0.001 or mid_t > L_seg + 0.001)
-                        
-                        lbl = "Corner Unit" if is_corner_filler else self.TYPE_LABELS.get(unit_type, "Unit")
-                        color = (74, 222, 128) if is_corner_filler else self.TYPE_COLORS.get(unit_type, (180, 200, 255))
-
-                        bnd = [pt.as_tuple() for pt in poly]
+                        bnd  = [v1_in.as_tuple(), v2_in.as_tuple(), v2_out.as_tuple(), v1_out.as_tuple()]
                         area = abs(sum(bnd[j][0]*bnd[(j+1)%4][1] - bnd[(j+1)%4][0]*bnd[j][1] for j in range(4)))/2.0
-                        cfg = next((c for c in self.unit_mix if c.get("type") == unit_type), {})
 
-                        new_room = {
-                            "id": f"R-{side}-{i}-{ri}",
-                            "label": lbl,
-                            "boundary": bnd,
-                            "area": round(area, 1),
-                            "min_width": round(use_w, 2),
+                        mid_t           = curr_pos + use_w / 2.0
+                        is_corner       = (mid_t < -0.001 or mid_t > L_seg + 0.001)
+                        lbl   = "Corner Unit" if is_corner else self.TYPE_LABELS.get(unit_type, "Unit")
+                        color = (74, 222, 128) if is_corner else self.TYPE_COLORS.get(unit_type, (180, 200, 255))
+                        cfg   = next((c for c in self.unit_mix if c.get("type") == unit_type), {})
+
+                        room = {
+                            "id":         f"R-{side}-{i}-{ri}",
+                            "label":      lbl,
+                            "boundary":   bnd,
+                            "area":       round(area, 1),
+                            "min_width":  round(use_w, 2),
                             "is_landlocked": False,
-                            "fill": color,
-                            "unit_type": "corner" if is_corner_filler else unit_type,
-                            "modules": round(use_w / self.module, 2),
-                            "config": cfg,
+                            "fill":       color,
+                            "unit_type":  "corner" if is_corner else unit_type,
+                            "modules":    round(use_w / self.module, 2),
+                            "config":     cfg,
                         }
-                        self.rooms.append(new_room)
+                        self.rooms.append(room)
+                        # IMMEDIATELY register in local obstacle list for butt-joint accuracy
+                        occupied_polys.append([Point(p[0], p[1]) for p in bnd])
                         ri += 1
                         curr_pos += use_w
 
