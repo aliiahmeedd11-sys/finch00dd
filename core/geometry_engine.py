@@ -209,84 +209,72 @@ class GeometryPipeline:
     def _place_cores_every(self, pts, nodes_L, nodes_R, miter_dirs, hw):
         if len(pts) < 2: return
         
-        def place_core(p, d, label, is_straight=False, turn_left=True):
+        # Determine strict placement rules
+        module_step = self.module or 3.6
+        spacing = round(self.core_spacing / module_step) * module_step
+        if spacing < module_step: spacing = module_step
+
+        def place_core(p, d, label, side_name, origin_edge):
+            direction_out = Point(-d.y, d.x) if side_name == "L" else Point(d.y, -d.x)
+            
+            stair = StaircaseCore(origin_edge, direction_out, d, self.stair_width, self.floor_height)
+            core = {"label": label, "station_m": 0.0, "side": side_name, "stair": vars(stair), "elevator": None}
+            
+            elev = None
+            if self.num_floors > 4:
+                elev = ElevatorShaft(origin_edge + d * stair.total_width, direction_out, d)
+                core["elevator"] = vars(elev)
+
+            self.cores.append(core)
+            
+            self.static_obstacles.append([Point(px, py) for px, py in stair.boundary])
+            if elev:
+                self.static_obstacles.append([Point(px, py) for px, py in elev.boundary])
+
+            # Envelope for Visual/Zoning
+            core_offset = stair.total_width + (elev.shaftW if elev else 0.0)
+            cp1 = origin_edge
+            cp2 = cp1 + d * core_offset
+            cp3 = cp2 + direction_out * stair.total_len
+            cp4 = cp1 + direction_out * stair.total_len
+            core_env = Room([cp1.grid(), cp2.grid(), cp3.grid(), cp4.grid()], label=f"Service Core {len(self.cores)}")
+            
+            self.rooms.append({
+                "label": core_env.label,
+                "boundary": core_env.boundary,
+                "area": core_env.area,
+                "min_width": core_env.min_width,
+                "is_landlocked": False,
+                "fill": (210, 215, 220)
+            })
+            self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
+
+        # Walk each straight segment independently to avoid corners
+        for i in range(len(pts)-1):
+            p1, p2 = pts[i], pts[i+1]
+            seg_vec = p2 - p1
+            seg_len = seg_vec.length()
+            if seg_len < 5.0: continue
+            
+            d = seg_vec.normalised()
             n = Point(-d.y, d.x)
-            # الإزاحة لضمان ملامسة حرف الكور لحرف الممر (Edge Alignment)
-            left_edge = (p + n * hw + d * hw).grid() 
-            right_edge = (p - n * hw + d * hw).grid()
-
-            sides_to_try = [("L", left_edge), ("R", right_edge)]
-            # If at a bend, prioritize placing on the OUTSIDE face
-            if not is_straight:
-                if turn_left: # Left turn -> Outside is Right
-                    sides_to_try = [("R", right_edge)]
-                else:         # Right turn -> Outside is Left
-                    sides_to_try = [("L", left_edge)]
             
-            for side_name, origin_edge in sides_to_try:
-                # تحديد اتجاه الانطلاق للخارج (بره الممر)
-                direction_out = n if side_name == "L" else Point(-n.x, -n.y)
-                
-                # إنشاء الكور (يبدأ من الحرف ويمتد للخارج)
-                stair = StaircaseCore(origin_edge, direction_out, d, self.stair_width, self.floor_height)
-                core = {"label": label, "station_m": 0.0, "side": side_name, "stair": vars(stair), "elevator": None}
-                
-                elev = None
-                if self.num_floors > 4:
-                    elev = ElevatorShaft(origin_edge + d * stair.total_width, direction_out, d)
-                    core["elevator"] = vars(elev)
+            # Safe zone bounds: avoid placing cores near the actual corners (leave room depth + tolerance for corner units)
+            safe_margin = self.room_depth + 1.0 # Buffer from the corner
+            if seg_len <= safe_margin * 2:
+                # Segment too short to have a core safely, put it strictly in the exact middle
+                mid_p = p1 + d * (seg_len / 2.0)
+                left_edge = (mid_p + n * hw).grid()
+                place_core(mid_p, d, f"Service Core {len(self.cores)+1}", "L", left_edge)
+                continue
 
-                self.cores.append(core)
-                
-                # إضافة الكور كـ Obstacle لمنع تداخل الغرف معه
-                self.static_obstacles.append([Point(px, py) for px, py in stair.boundary])
-                if elev:
-                    self.static_obstacles.append([Point(px, py) for px, py in elev.boundary])
-
-                # Envelope for Visual/Zoning
-                core_offset = stair.total_width + (elev.shaftW if elev else 0.0)
-                cp1 = origin_edge
-                cp2 = cp1 + d * core_offset
-                cp3 = cp2 + direction_out * stair.total_len
-                cp4 = cp1 + direction_out * stair.total_len
-                core_env = Room([cp1.grid(), cp2.grid(), cp3.grid(), cp4.grid()], label=f"Service Core Envelope {len(self.cores)}")
-                
-                self.rooms.append({
-                    "label": core_env.label,
-                    "boundary": core_env.boundary,
-                    "area": core_env.area,
-                    "min_width": core_env.min_width,
-                    "is_landlocked": False,
-                    "fill": (210, 215, 220)
-                })
-                self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
-                break
-
-        # 1. Place at every internal corner
-        for i in range(1, len(pts)-1):
-            p = pts[i]
-            d = (pts[i+1] - pts[i]).normalised()
-            d_prev = (pts[i] - pts[i-1]).normalised()
-            cross = d_prev.x * d.y - d_prev.y * d.x
-            is_left_turn = (cross > 0)
-            
-            place_core(p, d, f"Service Core {len(self.cores)+1}", is_straight=False, turn_left=is_left_turn)
-
-        # 2. If it is a straight line, fallback to periodic placement
-        # === STRUCTURAL MODULE SNAPPING ===
-        # Ensure cores are placed at multiples of the 3.6m module
-        if not self.cores:
-            module_step = self.module or 3.6
-            step = round(self.core_spacing / module_step) * module_step
-            if step < module_step: step = module_step
-
-            total_len = self._polyline_length(pts)
-            if total_len < 5.0: return
-            spacing = max(5.0, float(step))
-            s = 0.0
-            while s <= total_len + 1e-6:
-                p, d = self._point_and_dir_at_distance(pts, s + 0.01)
-                place_core(p, d, f"Service Core {len(self.cores)+1}")
+            # Place periodic cores along the straight span
+            s = safe_margin
+            while s <= seg_len - safe_margin + 1e-6:
+                curr_p = p1 + d * s
+                # Default map to Left side for now
+                left_edge = (curr_p + n * hw).grid()
+                place_core(curr_p, d, f"Service Core {len(self.cores)+1}", "L", left_edge)
                 s += spacing
 
     def process_boundary(self, boundary: List[List[float]], setbacks: float = 3.0, apply_zoning=False):
@@ -388,7 +376,86 @@ class GeometryPipeline:
             })
             self.static_obstacles.append([Point(px, py) for px, py in stair.boundary])
 
-        # 4. ROOM PACKING (Zero-Overlap Butt-Joints)
+        # 4. CORNER UNIT GENERATION
+        # Explicitly map the left/right intersection volumes (green/brown gaps)
+        # to ensure they are 100% occupied before standard room packing starts.
+        for i in range(1, len(pts)-1):
+            p1, p_cen, p2 = pts[i-1], pts[i], pts[i+1]
+            v1 = (p_cen - p1).normalised()
+            v2 = (p2 - p_cen).normalised()
+            cross = v1.x * v2.y - v1.y * v2.x
+            is_left_turn = (cross > 0)
+            
+            # The corner geometry consists of the intersection of two orthogonal bands.
+            # We connect the outer corner of the room depths to the miter joint.
+            n1 = miter_dirs[i-1] # (Using miter_dirs is approximate for segments, let's use exact normals)
+            n_in_1 = Point(-v1.y, v1.x)
+            n_in_2 = Point(-v2.y, v2.x)
+            
+            # Distance from centerline to the outer wall of rooms is hw + depth
+            overall_depth = hw + self.room_depth
+            
+            # Left side Corner
+            # Ray 1: p1 -> p_cen, shifted left by overall_depth
+            # Ray 2: p_cen -> p2, shifted left by overall_depth
+            # Intersection is the far corner tip.
+            bisector_L = (v1 + v2).normalised()
+            m_L = Point(-bisector_L.y, bisector_L.x)
+            dot_L = m_L.dot(n_in_1)
+            scale_L = overall_depth / max(0.1, dot_L)
+            far_pt_L = p_cen + m_L * scale_L
+            
+            # The 4 points forming the Left Corner Unit
+            c_poly_L = [
+                nodes_L[i],                            # Miter point at corridor edge
+                (nodes_L[i] - v1 * self.room_depth),   # Project backward along segment 1
+                far_pt_L,                              # The far intersecting corner
+                (nodes_L[i] + v2 * self.room_depth)    # Project forward along segment 2
+            ]
+            
+            # Right side Corner
+            bisector_R = (v1 + v2).normalised()
+            m_R = Point(bisector_R.y, -bisector_R.x) # Right side bisector
+            n_out_1 = Point(v1.y, -v1.x) # Right normal
+            dot_R = m_R.dot(n_out_1)
+            scale_R = overall_depth / max(0.1, dot_R)
+            far_pt_R = p_cen + m_R * scale_R
+            
+            c_poly_R = [
+                nodes_R[i],                            # Miter point at corridor edge
+                (nodes_R[i] - v1 * self.room_depth),
+                far_pt_R,
+                (nodes_R[i] + v2 * self.room_depth)
+            ]
+            
+            # Only generate a unit on the "Outside" of the turn to form a clean L-shape,
+            # or on both if there's enough room. Simplest rule: inside corners get badly
+            # pinched, we just generate on both sides and let collision detection handle overlap.
+            for side_name, poly, turn_condition in [("L", c_poly_L, is_left_turn), ("R", c_poly_R, not is_left_turn)]:
+                # Visual type colors: Outer (green) vs Inner (brown)
+                # Left turn -> Right is outer (green). Right turn -> Left is outer (green).
+                is_outer = (side_name == "R" and is_left_turn) or (side_name == "L" and not is_left_turn)
+                color = (74, 222, 128) if is_outer else (165, 42, 42)
+                lbl = "Corner Unit (Outer)" if is_outer else "Corner Unit (Inner)"
+
+                bnd = [pt.as_tuple() for pt in poly]
+                area = self._calc_area(poly)
+                if area > 10.0:
+                    self.rooms.append({
+                        "label": lbl,
+                        "boundary": list(bnd),
+                        "area": round(area, 1),
+                        "min_width": round(self.room_depth, 2),
+                        "is_landlocked": False,
+                        "fill": color,
+                        "unit_type": "bed2" if area > 60 else "studio",
+                        "modules": round(area / (self.room_depth * self.module), 1),
+                        "config": {}
+                    })
+                    self.static_obstacles.append(poly)
+
+
+        # 5. ROOM PACKING (Zero-Overlap Butt-Joints)
         ri = 1
         depth = self.room_depth
 
