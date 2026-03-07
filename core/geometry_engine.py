@@ -255,52 +255,66 @@ class GeometryPipeline:
             self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
 
         core_counter = 1
-        # Walk each straight segment and place cores on BOTH sides of the corridor.
-        # Critical: we interpolate along the WALL SEGMENT (nodes_L[i]→nodes_L[i+1]),
-        # NOT along the spine centerline, so origins are always exactly on the wall.
-        for i in range(len(pts)-1):
-            seg_spine_vec = pts[i+1] - pts[i]
-            seg_len = seg_spine_vec.length()
-            if seg_len < 1e-6: continue
+        
+        # Calculate continuous lengths
+        seg_lengths = [(pts[i+1] - pts[i]).length() for i in range(len(pts)-1)]
+        total_len = sum(seg_lengths)
+        if total_len < 1e-6: return
 
-            spine_dir = seg_spine_vec.normalised()
-
-            # Wall edge nodes for this segment
-            wL_start, wL_end = nodes_L[i], nodes_L[i+1]
-            wR_start, wR_end = nodes_R[i], nodes_R[i+1]
-
-            # Wall lengths (may differ slightly from seg_len due to miter)
-            wL_len = (wL_end - wL_start).length()
-            wR_len = (wR_end - wR_start).length()
-
-            # Decide station positions along the spine (t = 0..1 along the segment)
-            # Use a fixed margin from each end of the segment to avoid overlapping corners
-            margin_t = min(0.15, self.room_depth / max(seg_len, 1.0))  # 15% or room_depth, whichever is smaller
-            t_start = margin_t
-            t_end = 1.0 - margin_t
-
-            if t_end <= t_start:
-                # Very short segment: just do the middle
-                ts = [0.5]
+        # How many cores do we need for the total building length?
+        num_cores = max(1, round(total_len / spacing))
+        
+        # Determine ideal positions along the entire continuous spline
+        target_dists = []
+        if num_cores == 1:
+            target_dists.append(total_len / 2.0)
+        else:
+            step = total_len / num_cores
+            for k in range(num_cores):
+                target_dists.append((k + 0.5) * step)  # Centered in their chunk
+                
+        for dist_along_spline in target_dists:
+            # 1. Find which segment this distance falls into
+            d = dist_along_spline
+            seg_idx = 0
+            for i, slen in enumerate(seg_lengths):
+                if d <= slen + 1e-4 or i == len(seg_lengths) - 1:
+                    seg_idx = i
+                    break
+                d -= slen
+                
+            slen = seg_lengths[seg_idx]
+            if slen < 1e-6: continue
+            
+            # Distance along this specific segment
+            seg_d = max(0.0, min(d, slen))
+            
+            # 2. Shift away from corners (Corner Units occupy corners)
+            safe_margin = self.room_depth + 1.0
+            
+            if slen > safe_margin * 2:
+                # Clamp position so it doesn't overlap an interior corner intersection
+                if seg_idx > 0 and seg_d < safe_margin:
+                    seg_d = safe_margin  # Push forward from start corner
+                if seg_idx < len(seg_lengths) - 1 and slen - seg_d < safe_margin:
+                    seg_d = slen - safe_margin # Push backward from end corner
             else:
-                # How many evenly-spaced cores fit between t_start and t_end?
-                usable_len = (t_end - t_start) * seg_len
-                n_cores = max(1, round(usable_len / spacing))
-                if n_cores == 1:
-                    ts = [(t_start + t_end) / 2.0]
-                else:
-                    step_t = (t_end - t_start) / (n_cores - 1)
-                    ts = [t_start + k * step_t for k in range(n_cores)]
+                seg_d = slen / 2.0 # Segment too small, just put it in the exact middle
+                
+            t = seg_d / slen
+            
+            # 3. Project to the walls
+            wL_start, wL_end = nodes_L[seg_idx], nodes_L[seg_idx+1]
+            wR_start, wR_end = nodes_R[seg_idx], nodes_R[seg_idx+1]
+            spine_dir = (pts[seg_idx+1] - pts[seg_idx]).normalised()
+            
+            origin_L = wL_start + (wL_end - wL_start) * t
+            origin_R = wR_start + (wR_end - wR_start) * t
 
-            for t in ts:
-                # Interpolate on WALL vectors (not spine centerline!)
-                origin_L = wL_start + (wL_end - wL_start) * t
-                origin_R = wR_start + (wR_end - wR_start) * t
-
-                place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
-                core_counter += 1
-                place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
-                core_counter += 1
+            place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
+            core_counter += 1
+            place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
+            core_counter += 1
 
 
     def process_boundary(self, boundary: List[List[float]], setbacks: float = 3.0, apply_zoning=False):
