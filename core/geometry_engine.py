@@ -428,17 +428,19 @@ class GeometryPipeline:
                 vd = v_seg.normalised()
                 v_orth = Point(-vd.y, vd.x) if side == "L" else Point(vd.y, -vd.x)
                 
-                # OVERSHOOT RANGE: Search for space up to 'depth' beyond segment ends
-                # This allows filling corner voids with standard modules.
-                search_start = -depth
-                search_end   = L_seg + depth
+                # OVERSHOOT RANGE: Only overshoot at INTERNAL corners (where segment has neighbors)
+                # This prevents gaps at building ends while filling miter joints.
+                search_start = -depth if i > 0 else 0.0
+                search_end   = L_seg + depth if i < len(segs)-1 else L_seg
+                
                 band_poly = [(p1 + vd * search_start).as_tuple(), 
                             (p1 + vd * search_end).as_tuple(), 
                             (p1 + vd * search_end + v_orth*depth).as_tuple(), 
                             (p1 + vd * search_start + v_orth*depth).as_tuple()]
                 
                 blocked_intervals = []
-                # Check against ALL obstacles (hubs, corridors, cores, AND rooms from previous segments)
+                # Check against ALL obstacles. 
+                # CRITICAL: We MUST ignore rooms that are purely "behind" this corridor wall (depth < 0)
                 all_obs = self.static_obstacles + [r["boundary"] for r in self.rooms]
                 
                 for obs in all_obs:
@@ -449,7 +451,11 @@ class GeometryPipeline:
                         proj_t = [(p - p1).dot(vd) for p in obs_pts]
                         proj_depth = [(p - p1).dot(v_orth) for p in obs_pts]
                         
-                        if min(proj_depth) > depth + 0.1 or max(proj_depth) < -0.1:
+                        # Only block if the obstacle is actually "in front" of the corridor wall
+                        # (proj_depth > 0.1). If it's behind (negative or near-zero), ignore it.
+                        if max(proj_depth) < 0.1:
+                            pass
+                        elif min(proj_depth) > depth + 0.1:
                             pass
                         else:
                             min_t, max_t = min(proj_t) - 0.01, max(proj_t) + 0.01
@@ -506,7 +512,6 @@ class GeometryPipeline:
                         v1_out, v2_out = (v1_in + v_orth * depth).grid(), (v2_in + v_orth * depth).grid()
 
                         poly = [v1_in, v2_in, v2_out, v1_out]
-                        # If the room center is outside the 0..L_seg range, it's a Corner Unit filler
                         mid_t = curr_pos + use_w/2
                         is_corner_filler = (mid_t < -0.01 or mid_t > L_seg + 0.01)
                         
@@ -531,7 +536,6 @@ class GeometryPipeline:
                         }
                         self.rooms.append(new_room)
                         ri += 1
-
                         curr_pos += use_w
 
 
