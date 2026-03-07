@@ -255,81 +255,50 @@ class GeometryPipeline:
             self.static_obstacles.append([Point(px, py) for px, py in core_env.boundary])
 
         core_counter = 1
-        # Walk each straight segment independently
+        # Walk each straight segment and place cores on BOTH sides of the corridor.
+        # Critical: we interpolate along the WALL SEGMENT (nodes_L[i]→nodes_L[i+1]),
+        # NOT along the spine centerline, so origins are always exactly on the wall.
         for i in range(len(pts)-1):
-            p_spine_start, p_spine_end = pts[i], pts[i+1]
-            seg_vec = p_spine_end - p_spine_start
-            seg_len = seg_vec.length()
-            
-            if seg_len < 1e-6: continue # Skip zero-length segments
+            seg_spine_vec = pts[i+1] - pts[i]
+            seg_len = seg_spine_vec.length()
+            if seg_len < 1e-6: continue
 
-            spine_dir = seg_vec.normalised()
-            
-            # Corridor edge points for this segment
-            p_L_start, p_L_end = nodes_L[i], nodes_L[i+1]
-            p_R_start, p_R_end = nodes_R[i], nodes_R[i+1]
+            spine_dir = seg_spine_vec.normalised()
 
-            # Safe zone bounds: avoid placing cores too close to segment ends (corners)
-            # A core needs at least its total_len along the spine direction.
-            # Let's assume a minimum required length for a core footprint.
-            min_core_footprint_len = EgyptianCode.STAIR_MIN_TREAD * EgyptianCode.STAIR_MAX_RISERS_PER_FLIGHT + self.stair_width + 1.0 # Approx. 0.27*14 + 1.2 + 1 = 3.78 + 1.2 + 1 = ~6m
-            
-            # Ensure there's enough space for at least one core
-            if seg_len < min_core_footprint_len * 1.5: # If segment is too short for proper spacing, place one in the middle
-                mid_dist = seg_len / 2.0
-                
-                # Place on Left side
-                origin_L = p_L_start + spine_dir * mid_dist
-                place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
-                core_counter += 1
+            # Wall edge nodes for this segment
+            wL_start, wL_end = nodes_L[i], nodes_L[i+1]
+            wR_start, wR_end = nodes_R[i], nodes_R[i+1]
 
-                # Place on Right side
-                origin_R = p_R_start + spine_dir * mid_dist
-                place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
-                core_counter += 1
-                continue
+            # Wall lengths (may differ slightly from seg_len due to miter)
+            wL_len = (wL_end - wL_start).length()
+            wR_len = (wR_end - wR_start).length()
 
-            # Place periodic cores along the straight span
-            # Start placement after a buffer from the start of the segment
-            # End placement before a buffer from the end of the segment
-            buffer_from_end = min_core_footprint_len / 2.0 # Half core length as buffer
-            
-            # Calculate the effective length for core placement
-            effective_len = seg_len - (2 * buffer_from_end)
-            
-            if effective_len <= 0: # Segment too short even for buffered placement
-                # This case should be handled by the `seg_len < min_core_footprint_len * 1.5` check above,
-                # but as a safeguard, if we reach here and effective_len is non-positive, skip.
-                continue
+            # Decide station positions along the spine (t = 0..1 along the segment)
+            # Use a fixed margin from each end of the segment to avoid overlapping corners
+            margin_t = min(0.15, self.room_depth / max(seg_len, 1.0))  # 15% or room_depth, whichever is smaller
+            t_start = margin_t
+            t_end = 1.0 - margin_t
 
-            # Calculate number of cores that can fit
-            num_cores_possible = max(1, math.floor(effective_len / spacing))
-            
-            # Distribute cores evenly within the effective length
-            if num_cores_possible == 1:
-                # Place one core in the middle of the effective length
-                current_dist = buffer_from_end + effective_len / 2.0
+            if t_end <= t_start:
+                # Very short segment: just do the middle
+                ts = [0.5]
             else:
-                # Place multiple cores, starting from buffer_from_end
-                # and spacing them out.
-                # Adjust spacing slightly to fit exactly num_cores_possible
-                # if the original spacing doesn't divide perfectly.
-                actual_spacing = effective_len / (num_cores_possible - 1) if num_cores_possible > 1 else 0
-                if actual_spacing == 0: actual_spacing = spacing # Fallback for single core case
-
-            for k in range(num_cores_possible):
-                if num_cores_possible == 1:
-                    current_dist = buffer_from_end + effective_len / 2.0
+                # How many evenly-spaced cores fit between t_start and t_end?
+                usable_len = (t_end - t_start) * seg_len
+                n_cores = max(1, round(usable_len / spacing))
+                if n_cores == 1:
+                    ts = [(t_start + t_end) / 2.0]
                 else:
-                    current_dist = buffer_from_end + k * actual_spacing
+                    step_t = (t_end - t_start) / (n_cores - 1)
+                    ts = [t_start + k * step_t for k in range(n_cores)]
 
-                # Place on Left side
-                origin_L = p_L_start + spine_dir * current_dist
+            for t in ts:
+                # Interpolate on WALL vectors (not spine centerline!)
+                origin_L = wL_start + (wL_end - wL_start) * t
+                origin_R = wR_start + (wR_end - wR_start) * t
+
                 place_core_instance(origin_L.grid(), spine_dir, "L", core_counter)
                 core_counter += 1
-
-                # Place on Right side
-                origin_R = p_R_start + spine_dir * current_dist
                 place_core_instance(origin_R.grid(), spine_dir, "R", core_counter)
                 core_counter += 1
 
