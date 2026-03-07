@@ -48,10 +48,20 @@ class ArchHandler(SimpleHTTPRequestHandler):
             filename = f"exports/Finch_Plan_{ts}.dxf"
             export_to_dwg(data, filename)
             
-            # In a real app we'd serve the file, but here we return the filename
-            # and the frontend handles the blob. For simplicity, we'll keep it as 
-            # a downloadable DXF but named for CAD compatibility.
-            return self._send_json(200, {"filename": filename, "status": "success"})
+            with open(filename, 'rb') as f:
+                content = f.read()
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/dxf')
+            self.send_header('Content-Disposition', f'attachment; filename="Finch_Plan_{ts}.dxf"')
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type")
+            self.send_header("Access-Control-Expose-Headers", "Content-Disposition")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(content)
+            return
 
         if path != "/api/generate":
             return self.send_error(404)
