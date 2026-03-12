@@ -134,6 +134,36 @@ document.querySelectorAll("#snap-res button").forEach((b) => {
   });
 });
 
+// --- 2D / 3D Mode Toggle ---
+document.getElementById("btn-view-2d").addEventListener("click", function() {
+  switchMode('2d');
+});
+document.getElementById("btn-view-3d").addEventListener("click", function() {
+  switchMode('3d');
+});
+
+function switchMode(mode) {
+  const btn2d = document.getElementById("btn-view-2d");
+  const btn3d = document.getElementById("btn-view-3d");
+  const canvas = document.getElementById("floorplan");
+  const three = document.getElementById("three-container");
+  
+  if (mode === '2d') {
+    btn2d.classList.add("active");
+    btn3d.classList.remove("active");
+    canvas.style.display = 'block';
+    if (window.viewer3d) window.viewer3d.toggle(false);
+  } else {
+    btn3d.classList.add("active");
+    btn2d.classList.remove("active");
+    canvas.style.display = 'none';
+    if (window.viewer3d) {
+      window.viewer3d.toggle(true);
+      if (S.data) window.viewer3d.update(S.data);
+    }
+  }
+}
+
 document.getElementById("tb-all").addEventListener("click", () => {
   [
     "tb-rooms",
@@ -164,12 +194,6 @@ document.getElementById("tb-all").addEventListener("click", () => {
   draw();
 });
 
-const btnZoning = document.getElementById("tb-zoning");
-btnZoning.addEventListener("click", () => {
-  S.zoningOn = !S.zoningOn;
-  btnZoning.classList.toggle("active", S.zoningOn);
-  generate(); // Trigger generate with new zoning flag
-});
 
 // --- Draw Mode ---
 const btnDraw = document.getElementById("btn-draw");
@@ -211,7 +235,7 @@ function toggleDrawMode() {
   drawHint.classList.toggle(
     "visible",
     S.drawMode ||
-      (S.genMode === "spine" ? S.customSpine.length > 0 : S.landLot.length > 0),
+    (S.genMode === "spine" ? S.customSpine.length > 0 : S.landLot.length > 0),
   );
   modeBadge.classList.toggle("draw", S.drawMode);
   modeBadge.textContent = S.drawMode
@@ -405,7 +429,11 @@ function showUnitContextMenu(x, y) {
         }
 
         updateUI();
+        autoFit();
         draw();
+        if (window.viewer3d) {
+          window.viewer3d.update(S.data);
+        }
       }
       ctxMenu.style.display = "none";
     };

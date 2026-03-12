@@ -61,6 +61,9 @@ async function generate() {
   autoFit();
   draw();
   btn.textContent = "\u25B6 Generate Floor Plan";
+  if (window.viewer3d && window.viewer3d.active) {
+    window.viewer3d.update(S.data);
+  }
   btn.disabled = false;
 }
 
@@ -331,11 +334,11 @@ function computeLocal(params) {
       params.unit_mix && params.unit_mix.length > 0
         ? params.unit_mix
         : [
-            { type: "studio", mix: 25 },
-            { type: "bed1", mix: 50 },
-            { type: "bed2", mix: 25 },
-            { type: "bed3", mix: 0 },
-          ];
+          { type: "studio", mix: 25 },
+          { type: "bed1", mix: 50 },
+          { type: "bed2", mix: 25 },
+          { type: "bed3", mix: 0 },
+        ];
     const totalMix = mixConfig.reduce((s, c) => s + (c.mix || 0), 0) || 100;
 
     // Fill available length with unit widths according to module counts
@@ -435,6 +438,7 @@ function computeLocal(params) {
     corridors,
     hubs,
     rooms,
+    cores: staircase ? [{ label: "Service Core 1", stair: staircase, elevator: elevator }] : [],
     doors,
     windows,
     violations: [],

@@ -301,6 +301,40 @@ function draw() {
         // For a real file, you'd find the 'const S = { ... }' definition and modify it.
         // const S = { data: null, zoom: 10, panX: 0, panY: 0, showRooms: true, showSpine: true, showCores: true, showDucts: true, showBalconies: true, showLabels: true, showDims: false, showCirc: false, showGrid: true, };
       }
+
+      // 🔵 Render L-shaped Corner Balcony (outer corner units only)
+      if (S.showBalconies && r.corner_balcony && r.corner_balcony.length >= 6) {
+        const cb = r.corner_balcony;
+        // Fill the L-poly with semi-transparent blue
+        ctx.fillStyle = r.balcony_fill || "rgba(30, 144, 255, 0.28)";
+        ctx.strokeStyle = "rgba(30, 144, 255, 0.85)";
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([]);
+        ctx.beginPath();
+        const cs0 = toScreen(cb[0]);
+        ctx.moveTo(cs0[0], cs0[1]);
+        for (let ci = 1; ci < cb.length; ci++) {
+          const csi = toScreen(cb[ci]);
+          ctx.lineTo(csi[0], csi[1]);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw divider line (Glazing) at the unit interior boundary
+        // Vertex order: B, C, D, Di, Ci, Bi
+        // Glazing path: Bi (cb[5]) -> Ci (cb[4]) -> Di (cb[3])
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.lineWidth = 2.0;
+        const pBi = toScreen(cb[5]),
+          pCi = toScreen(cb[4]),
+          pDi = toScreen(cb[3]);
+        ctx.beginPath();
+        ctx.moveTo(pBi[0], pBi[1]);
+        ctx.lineTo(pCi[0], pCi[1]);
+        ctx.lineTo(pDi[0], pDi[1]);
+        ctx.stroke();
+      }
     }
 
     // 🔲 Room Dimensions (Show when showDims is active)

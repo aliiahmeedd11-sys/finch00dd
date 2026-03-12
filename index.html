@@ -1,12 +1,14 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finch — Parametric Architecture Engine</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
     <!-- CSS Modules -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
@@ -16,6 +18,9 @@
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/mixer.css">
     <link rel="stylesheet" href="css/context-menu.css">
+    <!-- Three.js r148 (Stable Unpkg for global attachment) -->
+    <script src="https://unpkg.com/three@0.148.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.148.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 
 <body>
@@ -131,12 +136,34 @@
             <div class="module-info-card">
                 <div class="module-badge">1 Module = <strong>3.6 m</strong></div>
                 <table class="module-table">
-                    <thead><tr><th>Type</th><th>Modules</th><th>Width</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Modules</th>
+                            <th>Width</th>
+                        </tr>
+                    </thead>
                     <tbody>
-                        <tr><td><span class="dot dot-studio"></span>Studio</td><td>× 1</td><td>3.6 m</td></tr>
-                        <tr><td><span class="dot dot-bed1"></span>1 Bed</td><td>× 2</td><td>7.2 m</td></tr>
-                        <tr><td><span class="dot dot-bed2"></span>2 Bed</td><td>× 3</td><td>10.8 m</td></tr>
-                        <tr><td><span class="dot dot-bed3"></span>3 Bed</td><td>× 4</td><td>14.4 m</td></tr>
+                        <tr>
+                            <td><span class="dot dot-studio"></span>Studio</td>
+                            <td>× 1</td>
+                            <td>3.6 m</td>
+                        </tr>
+                        <tr>
+                            <td><span class="dot dot-bed1"></span>1 Bed</td>
+                            <td>× 2</td>
+                            <td>7.2 m</td>
+                        </tr>
+                        <tr>
+                            <td><span class="dot dot-bed2"></span>2 Bed</td>
+                            <td>× 3</td>
+                            <td>10.8 m</td>
+                        </tr>
+                        <tr>
+                            <td><span class="dot dot-bed3"></span>3 Bed</td>
+                            <td>× 4</td>
+                            <td>14.4 m</td>
+                        </tr>
                     </tbody>
                 </table>
                 <div class="slider-group slider-group-mt">
@@ -181,12 +208,27 @@
             <button id="tb-circ">Circulation</button>
             <button id="tb-grid">Grid 3m</button>
             <button id="tb-all" class="tb-all-success">✅ Show All</button>
-            <button id="tb-zoning" class="active tb-zoning-warn">🧠 Solve
-                Rooms</button>
-            <button id="btn-export-cad" class="btn-export-dxf-blue" style="border-color:#4ADE80; color:#4ADE80">⬇ Export CAD (DXF)</button>
+            
+            <!-- 2D/3D Pill Switcher -->
+            <div class="pill-switcher">
+                <button id="btn-view-2d" class="pill-btn active">⬜ 2D Plan</button>
+                <button id="btn-view-3d" class="pill-btn">🧊 3D View</button>
+            </div>
+
+            <button id="btn-export-cad" class="btn-export-dxf-blue" style="border-color:#4ADE80; color:#4ADE80">⬇ Export
+                CAD (DXF)</button>
         </div>
         <div class="mode-badge" id="mode-badge">✏️ DRAW MODE</div>
         <canvas id="floorplan"></canvas>
+        <div id="three-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;"></div>
+        
+        <!-- 3D Floor Selector Strip -->
+        <div id="floor-selector" class="floor-selector-strip">
+            <button class="floor-btn active" data-floor="all">ALL</button>
+            <div class="floor-divider"></div>
+            <!-- Dynamic Buttons F1-FN injected by JS -->
+        </div>
+
         <div class="zoom-indicator" id="zoom-ind">100%</div>
         <div class="cursor-coords" id="cursor-coords">0.00, 0.00</div>
         <div class="snap-badge" id="snap-badge"></div>
@@ -432,6 +474,7 @@
     <script src="js/ui.js"></script>
     <script src="js/events.js"></script>
     <script src="js/export.js"></script>
+    <script src="js/three_view.js"></script>
 </body>
 
 </html>

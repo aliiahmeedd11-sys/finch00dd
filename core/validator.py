@@ -8,7 +8,7 @@ No structural elements. No pop-ups (errors go to Side Panel list).
 """
 from typing import Tuple, List, Dict, Any
 import math
-from geometry_engine import Room, EgyptianCode
+from .geometry_engine import Room, EgyptianCode
 
 # ---------------------------------------------------------------------------
 # Egyptian Building Code — Minimum Room Requirements (Article 82 Compliance)
