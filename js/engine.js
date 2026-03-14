@@ -61,7 +61,10 @@ async function generate() {
   autoFit();
   draw();
   btn.textContent = "\u25B6 Generate Floor Plan";
-  if (window.viewer3d && window.viewer3d.active) {
+  
+  // Real-time 3D Sync
+  const isSplit = document.body.classList.contains("split-active");
+  if (window.viewer3d && (window.viewer3d.active || isSplit)) {
     window.viewer3d.update(S.data);
   }
   btn.disabled = false;

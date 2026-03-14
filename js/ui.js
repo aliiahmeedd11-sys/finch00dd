@@ -68,38 +68,46 @@ function updateUI() {
     document.getElementById('stat-violations').textContent = d.violations.length;
     document.getElementById('stat-area').textContent = d.rooms.filter(r => r.label !== 'Shaft').reduce((s, r) => s + r.area, 0).toFixed(0);
     const badge = document.getElementById('violation-badge');
-    badge.textContent = d.violations.length; badge.className = 'violation-count ' + (d.violations.length === 0 ? 'clean' : '');
+    if (badge) {
+        badge.textContent = d.violations.length; 
+        badge.className = 'violation-count ' + (d.violations.length === 0 ? 'clean' : '');
+    }
     const list = document.getElementById('violations-list');
-    if (d.violations.length === 0) { list.innerHTML = `<div class="empty-state"><div class="big-icon">✅</div><p>All rooms comply with Egyptian Building Code.</p></div>`; }
-    else {
-        list.innerHTML = '';
-        d.violations.forEach((v, i) => {
-            const card = document.createElement('div');
-            card.className = 'violation-card';
-            card.style.animationDelay = `${i * 60}ms`;
-            card.innerHTML = `<div class="v-header"><span>⚠</span><span class="v-room">${v.subject || 'Room'}</span><span class="v-severity ${v.type || 'warning'}">${v.type || 'WARNING'}</span></div><div class="v-message">${v.msg || v.message || ''}</div><div class="v-options">${(v.options || []).map(o => `<button class="v-option-btn">${o}</button>`).join('')}</div>`;
-            list.appendChild(card);
-        });
+    if (list) {
+        if (d.violations.length === 0) { 
+            list.innerHTML = `<div class="empty-state"><div class="big-icon">✅</div><p>All rooms comply with Egyptian Building Code.</p></div>`; 
+        } else {
+            list.innerHTML = '';
+            d.violations.forEach((v, i) => {
+                const card = document.createElement('div');
+                card.className = 'violation-card';
+                card.style.animationDelay = `${i * 60}ms`;
+                card.innerHTML = `<div class="v-header"><span>⚠</span><span class="v-room">${v.subject || 'Room'}</span><span class="v-severity ${v.type || 'warning'}">${v.type || 'WARNING'}</span></div><div class="v-message">${v.msg || v.message || ''}</div><div class="v-options">${(v.options || []).map(o => `<button class="v-option-btn">${o}</button>`).join('')}</div>`;
+                list.appendChild(card);
+            });
+        }
     }
     const rList = document.getElementById('room-list');
-    rList.innerHTML = '';
-    d.rooms.forEach(r => {
-        const item = document.createElement('div');
-        item.className = 'room-list-item';
-        const swatch = document.createElement('div');
-        swatch.className = 'room-color-swatch';
-        swatch.style.background = Array.isArray(r.fill) ? 'rgb(' + r.fill.join(',') + ')' : (r.fill || '#ccc');
-        const info = document.createElement('span');
-        info.className = 'room-info';
-        info.textContent = r.label;
-        const meta = document.createElement('span');
-        meta.className = 'room-meta';
-        meta.textContent = `${r.area} m²`;
-        item.appendChild(swatch);
-        item.appendChild(info);
-        item.appendChild(meta);
-        rList.appendChild(item);
-    });
+    if (rList) {
+        rList.innerHTML = '';
+        d.rooms.forEach(r => {
+            const item = document.createElement('div');
+            item.className = 'room-list-item';
+            const swatch = document.createElement('div');
+            swatch.className = 'room-color-swatch';
+            swatch.style.background = Array.isArray(r.fill) ? 'rgb(' + r.fill.join(',') + ')' : (r.fill || '#ccc');
+            const info = document.createElement('span');
+            info.className = 'room-info';
+            info.textContent = r.label;
+            const meta = document.createElement('span');
+            meta.className = 'room-meta';
+            meta.textContent = `${r.area} m²`;
+            item.appendChild(swatch);
+            item.appendChild(info);
+            item.appendChild(meta);
+            rList.appendChild(item);
+        });
+    }
     // Staircase info panel — Full Egyptian Code
     if (d.staircase) {
         const sc = d.staircase, el = document.getElementById('stair-info');

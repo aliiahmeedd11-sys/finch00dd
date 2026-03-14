@@ -929,6 +929,8 @@ class GeometryPipeline:
             "doors":      self.doors,
             "ventShafts": self.vent_shafts,
             "violations": [],
+            "num_floors": self.num_floors,
+            "floor_height": self.floor_height,
             "economics": {
                 "grossBUA":      round(total_gba,                    2),
                 "netUsable":     round(unit_area * self.num_floors,   2),

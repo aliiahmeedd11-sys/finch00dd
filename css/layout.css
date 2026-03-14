@@ -201,3 +201,192 @@ input[type="range"]::-webkit-slider-thumb:hover {
     border-color: var(--danger);
     color: var(--danger)
 }
+
+/* === SPLIT VIEW & COLLAPSIBLE UTILITIES === */
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-icon {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btn-icon:hover {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+#controls-panel.collapsed, #side-panel.collapsed {
+    width: 48px !important;
+    min-width: 48px !important;
+    overflow: hidden;
+}
+
+#controls-panel.collapsed > *:not(.panel-header),
+#side-panel.collapsed > *:not(.side-panel-header) {
+    display: none;
+}
+
+#controls-panel.collapsed .panel-header h1,
+#controls-panel.collapsed .subtitle,
+#side-panel.collapsed .side-panel-header h3 {
+    display: none;
+}
+
+/* Collapsible Section Utilities */
+.collapsible-section {
+    margin: 4px 0;
+}
+
+.collapsible-header:hover {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+.section-arrow {
+    font-size: 10px;
+    transition: transform 0.2s;
+    color: var(--text-muted);
+}
+
+.collapsed-section .collapsible-content {
+    display: none;
+}
+
+.side-panel-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+}
+
+/* Split View Layout */
+#view-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+body.split-active #view-container {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    background: var(--border);
+}
+
+body.split-active.split-horiz #view-container {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 1fr 1fr;
+}
+
+body.split-active #three-container {
+    display: block !important;
+    position: relative !important;
+    height: 100% !important;
+    width: 100% !important;
+    z-index: 1 !important;
+}
+
+body.split-active #floorplan {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+body.split-active #floor-selector {
+    bottom: 20px;
+}
+
+/* 3D Data Overlay (Log) */
+.three-data-overlay {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--bg-glass);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: 12px;
+    z-index: 10;
+    pointer-events: auto;
+    font-family: var(--font-mono);
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: var(--shadow-soft);
+}
+
+.log-row {
+    font-size: 11px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary);
+}
+
+.log-row span:last-child {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.btn-log-action {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.2s;
+}
+
+.btn-log-action:hover {
+    border-color: var(--accent);
+}
+
+.btn-log-action.locked {
+    background: rgba(255, 23, 68, 0.1);
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+#workspace {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    background: var(--bg-primary);
+}
+
+#canvas-area {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#side-panel {
+    width: 320px;
+    min-width: 320px;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

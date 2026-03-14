@@ -100,6 +100,66 @@ document.querySelectorAll("#snap-res button").forEach((b) => {
   });
 });
 
+// --- Split View & Sidebar Toggles ---
+document.getElementById("btn-split-mode").addEventListener("click", () => {
+    document.body.classList.toggle("split-horiz");
+    const isHoriz = document.body.classList.contains("split-horiz");
+    document.getElementById("btn-split-mode").textContent = isHoriz ? "↕️" : "↔️";
+    if (window.viewer3d) setTimeout(() => window.viewer3d.onResize(), 100);
+});
+
+document.getElementById("btn-split-view").addEventListener("click", () => {
+    document.body.classList.toggle("split-active");
+    const isSplit = document.body.classList.contains("split-active");
+    if (window.viewer3d) {
+        if (isSplit) {
+            window.viewer3d.active = true;
+            window.viewer3d.container.style.display = 'block';
+            window.viewer3d.update(S.data);
+        } else {
+            // Restore normal 2D/3D state or keep 3D as is?
+            // User said "always 3d listen", so if split is off, maybe it hide?
+            // Let's toggle 3D active state based on current view mode if not split
+            const is3D = document.getElementById("btn-view-3d").classList.contains("active");
+            window.viewer3d.active = is3D;
+            window.viewer3d.container.style.display = is3D ? 'block' : 'none';
+        }
+        setTimeout(() => window.viewer3d.onResize(), 100);
+    }
+    // Update labels if needed or just toggle icon background
+});
+
+document.getElementById("btn-collapse-left").addEventListener("click", () => {
+    const cp = document.getElementById("controls-panel");
+    cp.classList.toggle("collapsed");
+    document.getElementById("btn-collapse-left").textContent = cp.classList.contains("collapsed") ? "▶" : "◀";
+    setTimeout(() => {
+        if (window.viewer3d) window.viewer3d.onResize();
+        autoFit();
+        draw();
+    }, 300);
+});
+
+document.getElementById("btn-collapse-right").addEventListener("click", () => {
+    const sp = document.getElementById("side-panel");
+    sp.classList.toggle("collapsed");
+    document.getElementById("btn-collapse-right").textContent = sp.classList.contains("collapsed") ? "◀" : "▶";
+    setTimeout(() => {
+        if (window.viewer3d) window.viewer3d.onResize();
+        autoFit();
+        draw();
+    }, 300);
+});
+
+document.getElementById("btn-lock-cam").addEventListener("click", () => {
+    if (window.viewer3d) {
+        window.viewer3d.cameraLocked = !window.viewer3d.cameraLocked;
+        const btn = document.getElementById("btn-lock-cam");
+        btn.textContent = window.viewer3d.cameraLocked ? "🔒 Locked" : "🔓 Unlocked";
+        btn.classList.toggle("locked", window.viewer3d.cameraLocked);
+    }
+});
+
 // --- Toolbar ---
 [
   "tb-rooms",
@@ -141,27 +201,47 @@ document.getElementById("btn-view-2d").addEventListener("click", function() {
 document.getElementById("btn-view-3d").addEventListener("click", function() {
   switchMode('3d');
 });
+document.getElementById("btn-view-split").addEventListener("click", function() {
+  switchMode('split');
+});
 
 function switchMode(mode) {
   const btn2d = document.getElementById("btn-view-2d");
   const btn3d = document.getElementById("btn-view-3d");
+  const btnSplit = document.getElementById("btn-view-split");
   const canvas = document.getElementById("floorplan");
   const three = document.getElementById("three-container");
   
+  // Clear active states
+  [btn2d, btn3d, btnSplit].forEach(b => b && b.classList.remove("active"));
+  document.body.classList.remove("split-active");
+
   if (mode === '2d') {
     btn2d.classList.add("active");
-    btn3d.classList.remove("active");
     canvas.style.display = 'block';
     if (window.viewer3d) window.viewer3d.toggle(false);
-  } else {
+  } else if (mode === '3d') {
     btn3d.classList.add("active");
-    btn2d.classList.remove("active");
     canvas.style.display = 'none';
     if (window.viewer3d) {
       window.viewer3d.toggle(true);
       if (S.data) window.viewer3d.update(S.data);
     }
+  } else if (mode === 'split') {
+    btnSplit.classList.add("active");
+    document.body.classList.add("split-active");
+    canvas.style.display = 'block'; // Ensure 2D is visible
+    if (window.viewer3d) {
+        window.viewer3d.toggle(true);
+        if (S.data) window.viewer3d.update(S.data);
+    }
   }
+
+  // Trigger resizes for both
+  setTimeout(() => {
+     resize(); // 2D Resize
+     if (window.viewer3d) window.viewer3d.onResize(); // 3D Resize
+  }, 100);
 }
 
 document.getElementById("tb-all").addEventListener("click", () => {

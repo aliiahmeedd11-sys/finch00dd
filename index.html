@@ -20,13 +20,20 @@
     <link rel="stylesheet" href="css/context-menu.css">
     <!-- Three.js r148 (Stable Unpkg for global attachment) -->
     <script src="https://unpkg.com/three@0.148.0/build/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.148.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="js/vendor/OrbitControls.js"></script>
 </head>
 
 <body>
     <div id="controls-panel">
         <div class="panel-header">
-            <h1>📐 Finch Engine</h1>
+            <div class="flex-between">
+                <h1>📐 Finch Engine</h1>
+                <div class="header-actions">
+                    <button class="btn-icon" id="btn-split-mode" title="Toggle Split Mode (Vert/Horiz)">↔️</button>
+                    <button class="btn-icon" id="btn-split-view" title="Toggle Split View">🪟</button>
+                    <button class="btn-icon" id="btn-collapse-left" title="Collapse Sidebar">◀</button>
+                </div>
+            </div>
             <div class="subtitle">Parametric Architecture · Egyptian Code</div>
         </div>
         <div class="section unit-mix-dashboard-container" id="unit-mix-dashboard">
@@ -81,11 +88,6 @@
             </div>
             <button class="btn-action btn-draw" id="btn-draw">✏️ Draw Spine</button>
             <button class="btn-action btn-lot btn-lot-gradient" id="btn-lot">🏛 Draw Land Lot</button>
-            <div class="draw-hint" id="draw-hint"><b>Left-click</b> to place points.<br><b>Right-click</b> or
-                <b>Escape</b> to finish drawing.<br><b>Drag</b> points to reposition (works after drawing
-                too!).<br><b>Double-click</b> a point to delete it.<br><b>Hold Alt</b> = free (no snap). <b>Hold
-                    Shift</b> = toggle ortho.<br><b>Ctrl+Z</b> = undo last point.
-            </div>
             <div class="spine-pts" id="spine-pts"></div>
             <button class="btn-clear" id="btn-clear">🗑 Clear Spine</button>
             <div class="section-title section-title-mt">Or Use Preset</div>
@@ -196,71 +198,75 @@
             <button class="btn-action btn-generate" id="btn-generate">▶ Generate Floor Plan</button>
         </div>
     </div>
-    <div id="canvas-area">
-        <div class="canvas-toolbar">
-            <button class="active" id="tb-rooms">Rooms</button>
-            <button class="active" id="tb-spine">Spine</button>
-            <button class="active" id="tb-cores">Cores</button>
-            <button class="active" id="tb-ducts">Ducts</button>
-            <button class="active" id="tb-balconies">Balcony</button>
-            <button class="active" id="tb-labels">Labels</button>
-            <button id="tb-dims">Dimensions</button>
-            <button id="tb-circ">Circulation</button>
-            <button id="tb-grid">Grid 3m</button>
-            <button id="tb-all" class="tb-all-success">✅ Show All</button>
+
+    <div id="workspace">
+        <div id="canvas-area">
+            <div class="canvas-toolbar">
+                <button class="active" id="tb-rooms">Rooms</button>
+                <button class="active" id="tb-spine">Spine</button>
+                <button class="active" id="tb-cores">Cores</button>
+                <button class="active" id="tb-ducts">Ducts</button>
+                <button class="active" id="tb-balconies">Balcony</button>
+                <button class="active" id="tb-labels">Labels</button>
+                <button id="tb-dims">Dimensions</button>
+                <button id="tb-circ">Circulation</button>
+                <button id="tb-grid">Grid 3m</button>
+                <button id="tb-all" class="tb-all-success">✅ Show All</button>
+                
+                <!-- 2D/3D Pill Switcher -->
+                <div class="pill-switcher">
+                    <button id="btn-view-2d" class="pill-btn active">⬜ 2D Plan</button>
+                    <button id="btn-view-split" class="pill-btn">🪟 Split</button>
+                    <button id="btn-view-3d" class="pill-btn">🧊 3D View</button>
+                </div>
+
+                <button id="btn-export-cad" class="btn-export-dxf-blue" style="border-color:#4ADE80; color:#4ADE80">⬇ Export
+                    CAD (DXF)</button>
+            </div>
+            <div class="mode-badge" id="mode-badge">✏️ DRAW MODE</div>
+            <div id="draw-hint" class="draw-hint">Click on canvas to draw. Right-click or ESC to finish.</div>
             
-            <!-- 2D/3D Pill Switcher -->
-            <div class="pill-switcher">
-                <button id="btn-view-2d" class="pill-btn active">⬜ 2D Plan</button>
-                <button id="btn-view-3d" class="pill-btn">🧊 3D View</button>
+            <div id="view-container">
+                <canvas id="floorplan"></canvas>
+                <div id="three-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;">
+                    <!-- 3D Log Overlay -->
+                    <div id="three-log" class="three-data-overlay">
+                        <div class="log-row"><span>Status:</span> <span id="log-status">Standby</span></div>
+                        <div class="log-row"><span>Rooms:</span> <span id="log-rooms">0</span></div>
+                        <div class="log-row"><span>Area:</span> <span id="log-area">0 m²</span></div>
+                        <button class="btn-log-action" id="btn-lock-cam" title="Lock 3D Camera">🔓 Unlocked</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3D Floor Selector Strip -->
+            <div id="floor-selector" class="floor-selector-strip">
+                <button class="floor-btn active" data-floor="all">ALL</button>
+                <div class="floor-divider"></div>
+                <!-- Dynamic Buttons F1-FN injected by JS -->
             </div>
 
-            <button id="btn-export-cad" class="btn-export-dxf-blue" style="border-color:#4ADE80; color:#4ADE80">⬇ Export
-                CAD (DXF)</button>
-        </div>
-        <div class="mode-badge" id="mode-badge">✏️ DRAW MODE</div>
-        <canvas id="floorplan"></canvas>
-        <div id="three-container" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;"></div>
-        
-        <!-- 3D Floor Selector Strip -->
-        <div id="floor-selector" class="floor-selector-strip">
-            <button class="floor-btn active" data-floor="all">ALL</button>
-            <div class="floor-divider"></div>
-            <!-- Dynamic Buttons F1-FN injected by JS -->
-        </div>
-
-        <div class="zoom-indicator" id="zoom-ind">100%</div>
-        <div class="cursor-coords" id="cursor-coords">0.00, 0.00</div>
-        <div class="snap-badge" id="snap-badge"></div>
-        <div class="circ-legend" id="circ-legend">
-            <div class="circ-row">
-                <div class="circ-dot circ-green"></div> ≤ 15m (safe)
-            </div>
-            <div class="circ-row">
-                <div class="circ-dot circ-yellow"></div> 15–30m
-            </div>
-            <div class="circ-row">
-                <div class="circ-dot circ-red"></div> &gt; 30m (exceeds)
+            <div class="zoom-indicator" id="zoom-ind">100%</div>
+            <div class="cursor-coords" id="cursor-coords">0.00, 0.00</div>
+            <div class="snap-badge" id="snap-badge"></div>
+            <div class="circ-legend" id="circ-legend">
+                <div class="circ-row">
+                    <div class="circ-dot circ-green"></div> ≤ 15m (safe)
+                </div>
+                <div class="circ-row">
+                    <div class="circ-dot circ-yellow"></div> 15–30m
+                </div>
+                <div class="circ-row">
+                    <div class="circ-dot circ-red"></div> &gt; 30m (exceeds)
+                </div>
             </div>
         </div>
-    </div>
-    </div>
 
-    <!-- Right-click Unit Context Menu -->
-    <div id="unit-context-menu" class="context-menu">
-        <div class="context-menu-title">Change Unit Type</div>
-        <div id="unit-type-options">
-            <!-- Populated by JS -->
-        </div>
-        <div class="context-menu-divider"></div>
-        <div class="context-menu-item danger" id="btn-delete-room">
-            <span>🗑</span> Delete Unit
-        </div>
-    </div>
-
-    <div id="side-panel">
-        <div class="side-panel-section first">
-            <h3>📊 Urban Metrics</h3>
+        <div id="side-panel">
+            <div class="side-panel-header">
+                <button class="btn-icon" id="btn-collapse-right" title="Collapse Panel">▶</button>
+                <h3>📊 Urban Metrics</h3>
+            </div>
             <div class="urban-metrics-panel">
                 <!-- Top Highlights -->
                 <div class="metric-highlights">
@@ -342,6 +348,39 @@
                     </div>
                 </div>
 
+                <div class="side-panel-divider" style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+
+                <!-- COLLAPSIBLE: Room List -->
+                <div class="collapsible-section" id="section-rooms">
+                    <div class="collapsible-header" onclick="toggleSection('section-rooms')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 8px 4px;">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">🏠 Room List</span>
+                        <span class="section-arrow">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div id="room-list" class="room-list-container">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-panel-divider" style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+
+                <!-- COLLAPSIBLE: Egyptian Code Compliance -->
+                <div class="collapsible-section" id="section-compliance">
+                    <div class="collapsible-header" onclick="toggleSection('section-compliance')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding: 8px 4px;">
+                        <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">⚖️ Code Compliance</span>
+                        <div id="violation-badge" class="violation-count clean">0</div>
+                        <span class="section-arrow">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div id="violations-list" class="violations-container">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="side-panel-divider" style="height: 1px; background: var(--border); margin: 16px 0;"></div>
+
                 <!-- Urban Viz Card -->
                 <div class="urban-viz-card">
                     <div class="urban-viz-header">Urban</div>
@@ -400,21 +439,17 @@
                 </div>
             </div>
         </div>
-        <div class="side-panel-section flex-grow" id="room-list-section">
-            <h3>Room List</h3>
-            <div id="room-list"></div>
+    </div>
+
+    <!-- Right-click Unit Context Menu -->
+    <div id="unit-context-menu" class="context-menu">
+        <div class="context-menu-title">Change Unit Type</div>
+        <div id="unit-type-options">
+            <!-- Populated by JS -->
         </div>
-        <div class="side-panel-section" id="compliance-section">
-            <div class="flex-between compliance-header">
-                <h3>Code Compliance</h3>
-                <span class="violation-count clean" id="violation-badge">0</span>
-            </div>
-            <div id="violations-list">
-                <div class="empty-state" id="empty-state">
-                    <div class="big-icon">✅</div>
-                    <p>No violations detected.<br>Draw a spine and generate a plan.</p>
-                </div>
-            </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="btn-delete-room">
+            <span>🗑</span> Delete Unit
         </div>
     </div>
 
@@ -466,6 +501,15 @@
     </div>
 
     <!-- JS Modules (order matters - dependencies first) -->
+    <script>
+        function toggleSection(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('collapsed-section');
+            const arrow = el.querySelector('.section-arrow');
+            if (arrow) arrow.textContent = el.classList.contains('collapsed-section') ? '▶' : '▼';
+        }
+    </script>
     <script src="js/geometry.js"></script>
     <script src="js/state.js"></script>
     <script src="js/mixer.js"></script>
