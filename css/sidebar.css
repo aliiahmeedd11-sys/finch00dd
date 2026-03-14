@@ -9,7 +9,7 @@
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     box-shadow: -4px 0 24px rgba(0, 0, 0, 0.3);
     z-index: 100;
 }
@@ -825,6 +825,7 @@
     color: var(--text-muted);
     background: var(--bg-card);
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     padding: 3px 8px;
     border-radius: 5px;
     border: 1px solid var(--border);

@@ -135,6 +135,7 @@ document.getElementById("btn-collapse-left").addEventListener("click", () => {
     document.getElementById("btn-collapse-left").textContent = cp.classList.contains("collapsed") ? "▶" : "◀";
     setTimeout(() => {
         if (window.viewer3d) window.viewer3d.onResize();
+        resize(); // Recalculate canvas size
         autoFit();
         draw();
     }, 300);
@@ -146,6 +147,7 @@ document.getElementById("btn-collapse-right").addEventListener("click", () => {
     document.getElementById("btn-collapse-right").textContent = sp.classList.contains("collapsed") ? "◀" : "▶";
     setTimeout(() => {
         if (window.viewer3d) window.viewer3d.onResize();
+        resize(); // Recalculate canvas size
         autoFit();
         draw();
     }, 300);

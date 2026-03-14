@@ -226,10 +226,13 @@ function updateUI() {
         }
     }
     // === DECISION MATRIX ===
-    const dSec = document.getElementById('decision-section');
+    const dSec = document.getElementById('section-advisor');
     const dList = document.getElementById('decision-list');
     if (d.decisions && d.decisions.length > 0) {
-        dSec.style.display = 'block';
+        if (dSec) {
+            dSec.classList.remove('decision-hidden');
+            dSec.style.display = 'block';
+        }
         dList.innerHTML = d.decisions.map(dec => `
             <div class="decision-card">
                 <div class="dc-title">${dec.title}</div>

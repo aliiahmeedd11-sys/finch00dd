@@ -36,163 +36,212 @@
             </div>
             <div class="subtitle">Parametric Architecture · Egyptian Code</div>
         </div>
-        <div class="section unit-mix-dashboard-container" id="unit-mix-dashboard">
-            <div class="section-title">📊 Unit Mix Breakdown</div>
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th class="col-type-width">Type</th>
-                        <th>Qty</th>
-                        <th>Actual%</th>
-                        <th>Avg m²</th>
-                    </tr>
-                </thead>
-                <tbody id="unit-dashboard-body">
-                    <tr>
-                        <td colspan="4" class="table-waiting-cell">Waiting for
-                            generation...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="section">
-            <div class="section-title">Statistics</div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-rooms">0</div>
-                    <div class="stat-label">Rooms</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-hubs">0</div>
-                    <div class="stat-label">Hub Cores</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-violations">0</div>
-                    <div class="stat-label">Violations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-area">0</div>
-                    <div class="stat-label">Total m²</div>
-                </div>
+        <div class="section collapsible-section" id="section-unit-mix">
+            <div class="collapsible-header" onclick="toggleSection('section-unit-mix')">
+                <div class="section-title">📊 Unit Mix Breakdown</div>
+                <span class="section-arrow">▼</span>
             </div>
-        </div>
-        <div class="section decision-hidden" id="decision-section">
-            <div class="section-title">🧠 Design Advisor</div>
-            <div id="decision-list"></div>
-        </div>
-        <div class="section">
-            <div class="section-title">Generation Mode</div>
-            <div class="prec-toggles prec-toggles-mb">
-                <button class="prec-btn active" id="mode-spine-btn">👣 Path</button>
-                <button class="prec-btn" id="mode-lot-btn">📐 Lot</button>
-            </div>
-            <button class="btn-action btn-draw" id="btn-draw">✏️ Draw Spine</button>
-            <button class="btn-action btn-lot btn-lot-gradient" id="btn-lot">🏛 Draw Land Lot</button>
-            <div class="spine-pts" id="spine-pts"></div>
-            <button class="btn-clear" id="btn-clear">🗑 Clear Spine</button>
-            <div class="section-title section-title-mt">Or Use Preset</div>
-            <div class="preset-grid">
-                <button class="preset-btn active" data-preset="L" id="preset-l"><span
-                        class="icon">∟</span>L-Shape</button>
-                <button class="preset-btn" data-preset="U" id="preset-u"><span class="icon">∪</span>U-Shape</button>
-                <button class="preset-btn" data-preset="I" id="preset-i"><span class="icon">│</span>Linear</button>
-                <button class="preset-btn" data-preset="T" id="preset-t"><span class="icon">⊤</span>T-Shape</button>
-            </div>
-        </div>
-        <div class="section">
-            <div class="section-title">⊞ Precision Input</div>
-            <div class="prec-toggles">
-                <button class="prec-btn active" id="prec-snap" title="Grid Snap">🧲 Snap</button>
-                <button class="prec-btn active" id="prec-ortho" title="Orthogonal Lock">⊢ Ortho</button>
-                <button class="prec-btn active" id="prec-sgrid" title="Structural Grid Align">⊞ Grid</button>
-            </div>
-            <div class="prec-res" id="snap-res">
-                <button data-res="0.25" class="active">0.25m</button>
-                <button data-res="0.5">0.50m</button>
-                <button data-res="1">1.00m</button>
-                <button data-res="3">3.00m</button>
-            </div>
-        </div>
-        <div class="section">
-            <div class="section-title">📡 Server Configuration</div>
-            <div class="slider-group slider-group-mb">
-                <label>API Host Link</label>
-                <input type="text" id="api-host-url" placeholder="http://localhost:8080" class="api-host-input">
-            </div>
-            <div class="d-flex-gap6">
-                <button class="btn-action btn-tertiary-flex" id="btn-update-host">Update
-                    Host</button>
-                <button class="btn-action btn-tertiary-flex" id="btn-test-host">Test
-                    Ping</button>
-            </div>
-            <div id="host-status" class="host-status-msg">
-                Status: Unknown</div>
-        </div>
-        <div class="section">
-            <div class="section-title">Corridor</div>
-            <div class="slider-group"><label>Width <span class="val" id="cw-val">1.80 m</span></label><input
-                    type="range" id="corridor-width" min="1.2" max="3.0" step="0.10" value="1.80"></div>
-        </div>
-        <div class="section">
-            <div class="section-title">⊞ Structural Module System</div>
-            <div class="module-info-card">
-                <div class="module-badge">1 Module = <strong>3.6 m</strong></div>
-                <table class="module-table">
+            <div class="collapsible-content">
+                <table class="dashboard-table">
                     <thead>
                         <tr>
-                            <th>Type</th>
-                            <th>Modules</th>
-                            <th>Width</th>
+                            <th class="col-type-width">Type</th>
+                            <th>Qty</th>
+                            <th>Actual%</th>
+                            <th>Avg m²</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="unit-dashboard-body">
                         <tr>
-                            <td><span class="dot dot-studio"></span>Studio</td>
-                            <td>× 1</td>
-                            <td>3.6 m</td>
-                        </tr>
-                        <tr>
-                            <td><span class="dot dot-bed1"></span>1 Bed</td>
-                            <td>× 2</td>
-                            <td>7.2 m</td>
-                        </tr>
-                        <tr>
-                            <td><span class="dot dot-bed2"></span>2 Bed</td>
-                            <td>× 3</td>
-                            <td>10.8 m</td>
-                        </tr>
-                        <tr>
-                            <td><span class="dot dot-bed3"></span>3 Bed</td>
-                            <td>× 4</td>
-                            <td>14.4 m</td>
+                            <td colspan="4" class="table-waiting-cell">Waiting for
+                                generation...</td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="slider-group slider-group-mt">
-                    <label>Room Depth <span class="val" id="rd-val">10.80 m</span></label>
-                    <input type="range" id="room-depth" min="3.6" max="10.8" step="0.10" value="10.80">
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-stats">
+            <div class="collapsible-header" onclick="toggleSection('section-stats')">
+                <div class="section-title">Statistics</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-rooms">0</div>
+                        <div class="stat-label">Rooms</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-hubs">0</div>
+                        <div class="stat-label">Hub Cores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-violations">0</div>
+                        <div class="stat-label">Violations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stat-area">0</div>
+                        <div class="stat-label">Total m²</div>
+                    </div>
                 </div>
             </div>
-            <!-- Hidden - MODULE value, read by engine and canvas for snapping -->
-            <input type="hidden" id="room-width" value="3.60">
         </div>
-        <div class="section">
-
-            <div class="section-title">🏛 Staircase & Elevator (الكود المصري)</div>
-            <div class="slider-group"><label>Floor Height <span class="val" id="fh-val">3.00 m</span></label><input
-                    type="range" id="floor-height" min="2.7" max="4.5" step="0.10" value="3.00"></div>
-            <div class="slider-group"><label>Stair Width <span class="val" id="sw-val">1.20 m</span></label><input
-                    type="range" id="stair-width" min="1.0" max="2.0" step="0.05" value="1.20"></div>
-            <div class="slider-group"><label>Num Floors <span class="val" id="nf-val">5</span></label><input
-                    type="range" id="num-floors" min="1" max="20" step="1" value="5"></div>
-            <div class="stair-info" id="stair-info"></div>
-            <div class="stair-info elevator-info-mt" id="elevator-info"></div>
+        <div class="section decision-hidden collapsible-section" id="section-advisor">
+            <div class="collapsible-header" onclick="toggleSection('section-advisor')">
+                <div class="section-title">🧠 Design Advisor</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div id="decision-list"></div>
+            </div>
         </div>
-        <div class="section">
-            <div class="section-title">🏢 Unit Mixer & Balconies</div>
-            <button class="btn-action btn-adv-mixer" id="btn-open-mixer">🎛️
-                Advanced Mixer Rules</button>
-            <div class="grid-info grid-info-mt">Configure sizes, ratios & balconies</div>
+        <div class="section collapsible-section" id="section-gen-mode">
+            <div class="collapsible-header" onclick="toggleSection('section-gen-mode')">
+                <div class="section-title">Generation Mode</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="prec-toggles prec-toggles-mb">
+                    <button class="prec-btn active" id="mode-spine-btn">👣 Path</button>
+                    <button class="prec-btn" id="mode-lot-btn">📐 Lot</button>
+                </div>
+                <button class="btn-action btn-draw" id="btn-draw">✏️ Draw Spine</button>
+                <button class="btn-action btn-lot btn-lot-gradient" id="btn-lot">🏛 Draw Land Lot</button>
+                <div class="spine-pts" id="spine-pts"></div>
+                <button class="btn-clear" id="btn-clear">🗑 Clear Spine</button>
+                <div class="section-title section-title-mt">Or Use Preset</div>
+                <div class="preset-grid">
+                    <button class="preset-btn active" data-preset="L" id="preset-l"><span
+                            class="icon">∟</span>L-Shape</button>
+                    <button class="preset-btn" data-preset="U" id="preset-u"><span class="icon">∪</span>U-Shape</button>
+                    <button class="preset-btn" data-preset="I" id="preset-i"><span class="icon">│</span>Linear</button>
+                    <button class="preset-btn" data-preset="T" id="preset-t"><span class="icon">⊤</span>T-Shape</button>
+                </div>
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-precision">
+            <div class="collapsible-header" onclick="toggleSection('section-precision')">
+                <div class="section-title">⊞ Precision Input</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="prec-toggles">
+                    <button class="prec-btn active" id="prec-snap" title="Grid Snap">🧲 Snap</button>
+                    <button class="prec-btn active" id="prec-ortho" title="Orthogonal Lock">⊢ Ortho</button>
+                    <button class="prec-btn active" id="prec-sgrid" title="Structural Grid Align">⊞ Grid</button>
+                </div>
+                <div class="prec-res" id="snap-res">
+                    <button data-res="0.25" class="active">0.25m</button>
+                    <button data-res="0.5">0.50m</button>
+                    <button data-res="1">1.00m</button>
+                    <button data-res="3">3.00m</button>
+                </div>
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-server">
+            <div class="collapsible-header" onclick="toggleSection('section-server')">
+                <div class="section-title">📡 Server Configuration</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="slider-group slider-group-mb">
+                    <label>API Host Link</label>
+                    <input type="text" id="api-host-url" placeholder="http://localhost:8080" class="api-host-input">
+                </div>
+                <div class="d-flex-gap6">
+                    <button class="btn-action btn-tertiary-flex" id="btn-update-host">Update
+                        Host</button>
+                    <button class="btn-action btn-tertiary-flex" id="btn-test-host">Test
+                        Ping</button>
+                </div>
+                <div id="host-status" class="host-status-msg">
+                    Status: Unknown</div>
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-corridor">
+            <div class="collapsible-header" onclick="toggleSection('section-corridor')">
+                <div class="section-title">Corridor</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="slider-group"><label>Width <span class="val" id="cw-val">1.80 m</span></label><input
+                        type="range" id="corridor-width" min="1.2" max="3.0" step="0.10" value="1.80"></div>
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-modules">
+            <div class="collapsible-header" onclick="toggleSection('section-modules')">
+                <div class="section-title">⊞ Structural Module System</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="module-info-card">
+                    <div class="module-badge">1 Module = <strong>3.6 m</strong></div>
+                    <table class="module-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Modules</th>
+                                <th>Width</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="dot dot-studio"></span>Studio</td>
+                                <td>× 1</td>
+                                <td>3.6 m</td>
+                            </tr>
+                            <tr>
+                                <td><span class="dot dot-bed1"></span>1 Bed</td>
+                                <td>× 2</td>
+                                <td>7.2 m</td>
+                            </tr>
+                            <tr>
+                                <td><span class="dot dot-bed2"></span>2 Bed</td>
+                                <td>× 3</td>
+                                <td>10.8 m</td>
+                            </tr>
+                            <tr>
+                                <td><span class="dot dot-bed3"></span>3 Bed</td>
+                                <td>× 4</td>
+                                <td>14.4 m</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="slider-group slider-group-mt">
+                        <label>Room Depth <span class="val" id="rd-val">10.80 m</span></label>
+                        <input type="range" id="room-depth" min="3.6" max="10.8" step="0.10" value="10.80">
+                    </div>
+                </div>
+                <!-- Hidden - MODULE value, read by engine and canvas for snapping -->
+                <input type="hidden" id="room-width" value="3.60">
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-stairs">
+            <div class="collapsible-header" onclick="toggleSection('section-stairs')">
+                <div class="section-title">🏛 Staircase & Elevator (الكود المصري)</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="slider-group"><label>Floor Height <span class="val" id="fh-val">3.00 m</span></label><input
+                        type="range" id="floor-height" min="2.7" max="4.5" step="0.10" value="3.00"></div>
+                <div class="slider-group"><label>Stair Width <span class="val" id="sw-val">1.20 m</span></label><input
+                        type="range" id="stair-width" min="1.0" max="2.0" step="0.05" value="1.20"></div>
+                <div class="slider-group"><label>Num Floors <span class="val" id="nf-val">5</span></label><input
+                        type="range" id="num-floors" min="1" max="20" step="1" value="5"></div>
+                <div class="stair-info" id="stair-info"></div>
+                <div class="stair-info elevator-info-mt" id="elevator-info"></div>
+            </div>
+        </div>
+        <div class="section collapsible-section" id="section-mixer">
+            <div class="collapsible-header" onclick="toggleSection('section-mixer')">
+                <div class="section-title">🏢 Unit Mixer & Balconies</div>
+                <span class="section-arrow">▼</span>
+            </div>
+            <div class="collapsible-content">
+                <button class="btn-action btn-adv-mixer" id="btn-open-mixer">🎛️
+                    Advanced Mixer Rules</button>
+                <div class="grid-info grid-info-mt">Configure sizes, ratios & balconies</div>
+            </div>
         </div>
         <div class="section">
             <button class="btn-action btn-generate" id="btn-generate">▶ Generate Floor Plan</button>
