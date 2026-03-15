@@ -6,3 +6,12 @@ logs/
 .vscode/
 .gemini/
 .agent/
+
+# finch
+finch.zip
+usethedelet/
+fix_indent.py
+
+
+
+

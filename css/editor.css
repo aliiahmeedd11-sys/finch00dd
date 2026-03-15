@@ -1,0 +1,135 @@
+/* editor.css - Parametric Layout Editor Styling */
+
+#layout-editor-modal {
+    display: none;
+    z-index: 2000;
+}
+
+.editor-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    height: 85vh;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+
+.editor-sidebar {
+    width: 280px;
+    background: #161b22;
+    border-right: 1px solid #30363d;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+.editor-header h3 {
+    margin: 0;
+    color: #f0f6fc;
+    font-size: 1.2rem;
+}
+
+.editor-unit-badge {
+    background: #1f2937;
+    color: #4ade80;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 8px;
+    display: inline-block;
+}
+
+.editor-tools {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.editor-btn {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 12px 16px;
+    border-radius: 6px;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.editor-btn .icon { font-size: 1.1rem; }
+
+.editor-btn:hover {
+    background: #21262d;
+}
+
+.editor-btn.active {
+    background: #1f6feb;
+    border-color: #388bfd;
+    color: white;
+}
+
+.editor-btn.primary {
+    background: #238636;
+    border-color: #2ea043;
+    color: white;
+    margin-top: 10px;
+}
+
+.editor-btn.primary:hover { background: #2ea043; }
+
+.editor-btn.secondary {
+    margin-top: auto;
+    border-color: transparent;
+}
+
+.editor-divider {
+    height: 1px;
+    background: #30363d;
+    margin: 10px 0;
+}
+
+.editor-footer {
+    margin-top: 20px;
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.editor-viewport {
+    flex-grow: 1;
+    position: relative;
+    background: #0d1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#layout-canvas {
+    background: #0d1117;
+    cursor: crosshair;
+}
+
+.viewport-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: #30363d;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3rem;
+    font-weight: 800;
+    pointer-events: none;
+    -webkit-user-select: none; /* Safari Support */
+    user-select: none;
+    opacity: 0.2;
+}
