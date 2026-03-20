@@ -101,65 +101,80 @@ document.querySelectorAll("#snap-res button").forEach((b) => {
 });
 
 // --- Split View & Sidebar Toggles ---
-document.getElementById("btn-split-mode").addEventListener("click", () => {
-    document.body.classList.toggle("split-horiz");
-    const isHoriz = document.body.classList.contains("split-horiz");
-    document.getElementById("btn-split-mode").textContent = isHoriz ? "↕️" : "↔️";
-    if (window.viewer3d) setTimeout(() => window.viewer3d.onResize(), 100);
+
+const splitMode = document?.getElementById("btn-split-mode");
+
+splitMode?.addEventListener("click", () => {
+  document.body.classList.toggle("split-horiz");
+  const isHoriz = document.body.classList.contains("split-horiz");
+  document.getElementById("btn-split-mode").textContent = isHoriz ? "↕️" : "↔️";
+  if (window.viewer3d) setTimeout(() => window.viewer3d.onResize(), 100);
 });
 
-document.getElementById("btn-split-view").addEventListener("click", () => {
+const splitView = document?.getElementById("btn-split-view");
+
+splitView?.addEventListener("click", () => {
+  try {
     document.body.classList.toggle("split-active");
     const isSplit = document.body.classList.contains("split-active");
     if (window.viewer3d) {
-        if (isSplit) {
-            window.viewer3d.active = true;
-            window.viewer3d.container.style.display = 'block';
-            window.viewer3d.update(S.data);
-        } else {
-            // Restore normal 2D/3D state or keep 3D as is?
-            // User said "always 3d listen", so if split is off, maybe it hide?
-            // Let's toggle 3D active state based on current view mode if not split
-            const is3D = document.getElementById("btn-view-3d").classList.contains("active");
-            window.viewer3d.active = is3D;
-            window.viewer3d.container.style.display = is3D ? 'block' : 'none';
-        }
-        setTimeout(() => window.viewer3d.onResize(), 100);
+      if (isSplit) {
+        window.viewer3d.active = true;
+        window.viewer3d.container.style.display = "block";
+        window.viewer3d.update(S.data);
+      } else {
+        // Restore normal 2D/3D state or keep 3D as is?
+        // User said "always 3d listen", so if split is off, maybe it hide?
+        // Let's toggle 3D active state based on current view mode if not split
+        const is3D = document
+          .getElementById("btn-view-3d")
+          .classList.contains("active");
+        window.viewer3d.active = is3D;
+        window.viewer3d.container.style.display = is3D ? "block" : "none";
+      }
+      setTimeout(() => window.viewer3d.onResize(), 100);
     }
     // Update labels if needed or just toggle icon background
+  } catch (e) {
+    console.log(e);
+  }
 });
 
 document.getElementById("btn-collapse-left").addEventListener("click", () => {
-    const cp = document.getElementById("controls-panel");
-    cp.classList.toggle("collapsed");
-    document.getElementById("btn-collapse-left").textContent = cp.classList.contains("collapsed") ? "▶" : "◀";
-    setTimeout(() => {
-        if (window.viewer3d) window.viewer3d.onResize();
-        resize(); // Recalculate canvas size
-        autoFit();
-        draw();
-    }, 300);
+  const cp = document.getElementById("controls-panel");
+  cp.classList.toggle("collapsed");
+  document.getElementById("btn-collapse-left").textContent =
+    cp.classList.contains("collapsed") ? "▶" : "◀";
+  setTimeout(() => {
+    if (window.viewer3d) window.viewer3d.onResize();
+    resize(); // Recalculate canvas size
+    autoFit();
+    draw();
+  }, 300);
 });
 
 document.getElementById("btn-collapse-right").addEventListener("click", () => {
-    const sp = document.getElementById("side-panel");
-    sp.classList.toggle("collapsed");
-    document.getElementById("btn-collapse-right").textContent = sp.classList.contains("collapsed") ? "◀" : "▶";
-    setTimeout(() => {
-        if (window.viewer3d) window.viewer3d.onResize();
-        resize(); // Recalculate canvas size
-        autoFit();
-        draw();
-    }, 300);
+  const sp = document.getElementById("side-panel");
+  sp.classList.toggle("collapsed");
+  document.getElementById("btn-collapse-right").textContent =
+    sp.classList.contains("collapsed") ? "◀" : "▶";
+  setTimeout(() => {
+    if (window.viewer3d) window.viewer3d.onResize();
+    resize(); // Recalculate canvas size
+    autoFit();
+    draw();
+  }, 300);
 });
 
 document.getElementById("btn-lock-cam").addEventListener("click", () => {
-    if (window.viewer3d) {
-        window.viewer3d.cameraLocked = !window.viewer3d.cameraLocked;
-        const btn = document.getElementById("btn-lock-cam");
-        btn.textContent = window.viewer3d.cameraLocked ? "🔒 Locked" : "🔓 Unlocked";
-        btn.classList.toggle("locked", window.viewer3d.cameraLocked);
-    }
+  if (window.viewer3d) {
+    window.viewer3d.cameraLocked = !window.viewer3d.cameraLocked;
+    const btn = document.getElementById("btn-lock-cam");
+    btn.textContent = window.viewer3d.cameraLocked
+      ? "🔒 Locked"
+      : "🔓 Unlocked";
+    btn.classList.toggle("locked", window.viewer3d.cameraLocked);
+  }
 });
 
 // --- Toolbar ---
@@ -196,16 +211,31 @@ document.getElementById("btn-lock-cam").addEventListener("click", () => {
   });
 });
 
+// --- Room List Filter ---
+document.querySelectorAll("#room-filter-toggle .segment").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll("#room-filter-toggle .segment")
+      .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    S.activeRoomFilter = btn.dataset.filter;
+    updateUI();
+    draw();
+  });
+});
+
 // --- 2D / 3D Mode Toggle ---
-document.getElementById("btn-view-2d").addEventListener("click", function() {
-  switchMode('2d');
+document.getElementById("btn-view-2d").addEventListener("click", function () {
+  switchMode("2d");
 });
-document.getElementById("btn-view-3d").addEventListener("click", function() {
-  switchMode('3d');
+document.getElementById("btn-view-3d").addEventListener("click", function () {
+  switchMode("3d");
 });
-document.getElementById("btn-view-split").addEventListener("click", function() {
-  switchMode('split');
-});
+document
+  .getElementById("btn-view-split")
+  .addEventListener("click", function () {
+    switchMode("split");
+  });
 
 function switchMode(mode) {
   const btn2d = document.getElementById("btn-view-2d");
@@ -213,37 +243,44 @@ function switchMode(mode) {
   const btnSplit = document.getElementById("btn-view-split");
   const canvas = document.getElementById("floorplan");
   const three = document.getElementById("three-container");
-  
+
   // Clear active states
-  [btn2d, btn3d, btnSplit].forEach(b => b && b.classList.remove("active"));
+  [btn2d, btn3d, btnSplit].forEach((b) => b && b.classList.remove("active"));
   document.body.classList.remove("split-active");
 
-  if (mode === '2d') {
+  if (mode === "2d") {
     btn2d.classList.add("active");
-    canvas.style.display = 'block';
+    canvas.style.display = "block";
     if (window.viewer3d) window.viewer3d.toggle(false);
-  } else if (mode === '3d') {
+  } else if (mode === "3d") {
     btn3d.classList.add("active");
-    canvas.style.display = 'none';
+    canvas.style.display = "none";
     if (window.viewer3d) {
       window.viewer3d.toggle(true);
       if (S.data) window.viewer3d.update(S.data);
     }
-  } else if (mode === 'split') {
+  } else if (mode === "split") {
     btnSplit.classList.add("active");
     document.body.classList.add("split-active");
-    canvas.style.display = 'block'; // Ensure 2D is visible
+    canvas.style.display = "block"; // Ensure 2D is visible
     if (window.viewer3d) {
-        window.viewer3d.toggle(true);
-        if (S.data) window.viewer3d.update(S.data);
+      window.viewer3d.toggle(true);
+      if (S.data) window.viewer3d.update(S.data);
     }
   }
 
-  // Trigger resizes for both
-  setTimeout(() => {
-     resize(); // 2D Resize
-     if (window.viewer3d) window.viewer3d.onResize(); // 3D Resize
-  }, 100);
+  // Trigger resizes for both. Use multiple frames to handle CSS transitions.
+  let frames = 0;
+  const sync = () => {
+    resize();
+    if (window.viewer3d) window.viewer3d.onResize();
+    frames++;
+    if (frames < 30) requestAnimationFrame(sync);
+    else if (mode === "split" || mode === "2d") {
+        if (typeof autoFit === "function") autoFit();
+    }
+  };
+  sync();
 }
 
 document.getElementById("tb-all").addEventListener("click", () => {
@@ -275,7 +312,6 @@ document.getElementById("tb-all").addEventListener("click", () => {
   document.getElementById("circ-legend").classList.add("visible");
   draw();
 });
-
 
 // --- Draw Mode ---
 const btnDraw = document.getElementById("btn-draw");
@@ -317,7 +353,7 @@ function toggleDrawMode() {
   drawHint.classList.toggle(
     "visible",
     S.drawMode ||
-    (S.genMode === "spine" ? S.customSpine.length > 0 : S.landLot.length > 0),
+      (S.genMode === "spine" ? S.customSpine.length > 0 : S.landLot.length > 0),
   );
   modeBadge.classList.toggle("draw", S.drawMode);
   modeBadge.textContent = S.drawMode
@@ -383,11 +419,15 @@ function updateSpineDisplay() {
 
 // --- Canvas resize ---
 function resize() {
-  const r = canvas.parentElement.getBoundingClientRect();
-  canvas.width = r.width * devicePixelRatio;
-  canvas.height = r.height * devicePixelRatio;
-  canvas.style.width = r.width + "px";
-  canvas.style.height = r.height + "px";
+  // Use the canvas's own display size as determined by CSS (Grid/Flex/etc.)
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  if (w === 0 || h === 0) return;
+
+  canvas.width = w * devicePixelRatio;
+  canvas.height = h * devicePixelRatio;
+  // We do NOT set canvas.style.width/height here to avoid overriding CSS Grid layout
+  
   ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
   draw();
 }
@@ -598,7 +638,34 @@ canvas.addEventListener("dblclick", async (e) => {
       pts.splice(hitIdx, 1);
       if (S.genMode === "spine") updateSpineDisplay();
       draw();
+      return; // Stop if we deleted a point
     }
+  }
+
+  // 3. New: Unit Detail Callout on Double Click
+  if (S.data && S.data.rooms) {
+    console.log(
+      "Dblclick detected at world coords:",
+      wx.toFixed(2),
+      wy.toFixed(2),
+    );
+    let hit = false;
+    for (let i = S.data.rooms.length - 1; i >= 0; i--) {
+      const r = S.data.rooms[i];
+      if (!r.boundary) continue;
+      if (isPointInPoly([wx, wy], r.boundary)) {
+        console.log(
+          "Hit room:",
+          r.label,
+          "Boundary points:",
+          r.boundary.length,
+        );
+        openUnitEditor(r);
+        hit = true;
+        break;
+      }
+    }
+    if (!hit) console.log("No room hit at this location.");
   }
 });
 

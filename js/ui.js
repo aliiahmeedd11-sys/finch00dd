@@ -90,23 +90,143 @@ function updateUI() {
     const rList = document.getElementById('room-list');
     if (rList) {
         rList.innerHTML = '';
-        d.rooms.forEach(r => {
-            const item = document.createElement('div');
-            item.className = 'room-list-item';
+        const filter = S.activeRoomFilter || 'all';
+        
+        // Unified list items
+        let items = [];
+
+        // 1. Units & Balconies
+        (d.rooms || []).forEach(r => {
+            const isUnit = r.label.includes("Bedroom") || r.label.includes("Studio") || 
+                           r.label.startsWith("Unit") || (r.label.startsWith("Room") && r.label !== "Room List");
+            const isShaft = r.label === "Shaft";
+            
+            if (isUnit && !isShaft) {
+                if (filter === 'all' || filter === 'units') {
+                    items.push({
+                        id: r.id,
+                        label: r.label,
+                        area: r.area,
+                        fill: r.fill,
+                        category: 'units'
+                    });
+                    // If it has a balcony, it's effectively "part of the unit" in the UI context
+                    if (r.balcony && r.balcony_area) {
+                         // We could list balcony separately or just note it. 
+                         // The prompt says "Units (include balcony): Displays all residential unit types... and their attached balconies"
+                         // This implies they are shown together or as part of the unit.
+                         // Let's add the balcony as a sub-item or a separate item if filter is units/all.
+                    }
+                }
+            } else if (isShaft) {
+                if (filter === 'all' || filter === 'ducts') {
+                    items.push({
+                        id: r.id,
+                        label: 'Service Shaft',
+                        area: r.area,
+                        fill: r.fill || [80, 88, 100],
+                        category: 'ducts'
+                    });
+                }
+            }
+        });
+
+        // 2. Corridors
+        if (filter === 'all' || filter === 'corridor') {
+            (d.corridors || []).forEach((c, i) => {
+                items.push({
+                    id: `corridor-${i}`,
+                    label: `Corridor Segment ${i + 1}`,
+                    area: polyArea ? polyArea(c).toFixed(1) : '—',
+                    fill: [45, 51, 59],
+                    category: 'corridor'
+                });
+            });
+        }
+
+        // 3. Ducts (Vent Shafts)
+        if (filter === 'all' || filter === 'ducts') {
+            (d.ventShafts || []).forEach((v, i) => {
+                items.push({
+                    id: `vent-${i}`,
+                    label: v.label || `Vent Shaft ${i+1}`,
+                    area: v.area || (polyArea ? polyArea(v.boundary).toFixed(1) : '—'),
+                    fill: v.fill || [100, 110, 120],
+                    category: 'ducts'
+                });
+            });
+        }
+
+        // 4. Cores (Stairs & Elevators)
+        if (filter === 'all' || filter === 'cores') {
+            (d.cores || []).forEach((core, i) => {
+                if (core.stair) {
+                    items.push({
+                        id: `stair-${i}`,
+                        label: core.label || `Staircase ${i+1}`,
+                        area: core.stair.area || '—',
+                        fill: [210, 153, 34],
+                        category: 'cores'
+                    });
+                }
+                if (core.elevator) {
+                    items.push({
+                        id: `elevator-${i}`,
+                        label: `Elevator ${i+1}`,
+                        area: core.elevator.area || '—',
+                        fill: [88, 166, 255],
+                        category: 'cores'
+                    });
+                }
+            });
+        }
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'room-list-item';
+            if (S.selectedRoomId === item.id) div.classList.add('selected');
+            div.dataset.category = item.category;
+            div.dataset.id = item.id;
+            
+            div.addEventListener('click', () => {
+                S.selectedRoomId = item.id;
+                updateUI(); // Redraw UI to update 'selected' class
+                draw();     // Redraw canvas to show highlight
+            });
+
+            div.addEventListener('dblclick', () => {
+                const room = S.data.rooms.find(r => r.label === item.label); // Rough match by label
+                if (room) {
+                    console.log("Sidebar double-clicked room:", room.label);
+                    openUnitEditor(room);
+                } else {
+                    // Fallback search by ID if data structure allows
+                    const roomById = S.data.rooms.find(r => r.id === item.id);
+                    if (roomById) openUnitEditor(roomById);
+                }
+            });
+            
             const swatch = document.createElement('div');
             swatch.className = 'room-color-swatch';
-            swatch.style.background = Array.isArray(r.fill) ? 'rgb(' + r.fill.join(',') + ')' : (r.fill || '#ccc');
+            swatch.style.background = Array.isArray(item.fill) ? `rgb(${item.fill.join(',')})` : (item.fill || '#ccc');
+            
             const info = document.createElement('span');
             info.className = 'room-info';
-            info.textContent = r.label;
+            info.textContent = item.label;
+            
             const meta = document.createElement('span');
             meta.className = 'room-meta';
-            meta.textContent = `${r.area} m²`;
-            item.appendChild(swatch);
-            item.appendChild(info);
-            item.appendChild(meta);
-            rList.appendChild(item);
+            meta.textContent = `${item.area} m²`;
+            
+            div.appendChild(swatch);
+            div.appendChild(info);
+            div.appendChild(meta);
+            rList.appendChild(div);
         });
+
+        if (items.length === 0) {
+            rList.innerHTML = `<div class="empty-state" style="padding: 20px;"><p>No items found for this category.</p></div>`;
+        }
     }
     // Staircase info panel — Full Egyptian Code
     if (d.staircase) {

@@ -316,15 +316,17 @@ body.split-active.split-horiz #view-container {
 body.split-active #three-container {
     display: block !important;
     position: relative !important;
+    grid-column: 2;
     height: 100% !important;
-    width: 100% !important;
+    min-width: 0;
     z-index: 1 !important;
 }
 
 body.split-active #floorplan {
     position: relative !important;
-    width: 100% !important;
+    grid-column: 1;
     height: 100% !important;
+    min-width: 0;
 }
 
 body.split-active #floor-selector {
