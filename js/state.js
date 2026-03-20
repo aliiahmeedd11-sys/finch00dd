@@ -39,6 +39,7 @@ const S = {
   showDims: false,
   showCirc: false,
   showGrid: true,
+  activeRoomFilter: "all",
   preset: "L",
   dragging: false,
   lastMouse: { x: 0, y: 0 },
@@ -107,4 +108,7 @@ const S = {
     },
   ],
   serverUrl: localStorage.getItem("finch_api_url") || "http://localhost:8080",
+  selectedRoomId: null,
+  editingRoom: null,
+  editorWalls: [],
 };

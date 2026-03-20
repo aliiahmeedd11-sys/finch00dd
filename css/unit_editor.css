@@ -1,0 +1,151 @@
+/* unit_editor.css - Finch Parametric Architecture Engine */
+
+.unit-editor-content {
+    width: 90vw;
+    height: 90vh;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+}
+
+.unit-editor-body {
+    flex: 1;
+    display: flex;
+    flex-direction: row; /* Sidebar left, Canvas right */
+    position: relative;
+    overflow: hidden;
+}
+
+#unit-canvas-container {
+    flex: 1;
+    display: flex;
+    position: relative;
+    background: #0d1117;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.sidebar-row {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+    flex: 1;
+}
+.unit-editor-sidebar {
+    width: 260px;
+    background: rgba(0, 0, 0, 0.3);
+    border-right: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.sidebar-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-weight: 800;
+}
+
+.editor-tool, .btn-action {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.editor-tool:hover, .btn-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+}
+
+.editor-tool.active {
+    background: rgba(88, 166, 255, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(88, 166, 255, 0.1);
+}
+
+.tool-icon, .btn-icon {
+    font-size: 16px;
+}
+
+/* === CANVAS AREA === */
+#unit-canvas-container {
+    flex: 1;
+    position: relative;
+    background: #0d1117;
+    cursor: crosshair;
+}
+
+#unit-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.editor-hint-v2 {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 12px;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.unit-editor-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    background: var(--bg-glass);
+}
+
+.modal-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-generate {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+}

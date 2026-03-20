@@ -1,5 +1,10 @@
 /* canvas.js - Finch Parametric Architecture Engine */
 
+function getCatAlpha(category) {
+  if (!S.activeRoomFilter || S.activeRoomFilter === "all") return 1.0;
+  return S.activeRoomFilter === category ? 1.0 : 0.15;
+}
+
 function autoFit() {
   if (!S.data) return;
   let x0 = Infinity,
@@ -232,6 +237,7 @@ function draw() {
   ctx.fillStyle = "#2d333b";
   ctx.strokeStyle = "#444c56";
   ctx.lineWidth = 1;
+  ctx.globalAlpha = getCatAlpha("corridor");
   d.corridors.forEach((c, idx) => {
     dPoly(c, true, true);
     if (S.showDims) {
@@ -251,6 +257,7 @@ function draw() {
   ctx.fillStyle = "#30404d";
   ctx.strokeStyle = "#58a6ff55";
   ctx.lineWidth = 1.5;
+  ctx.globalAlpha = getCatAlpha("cores");
   for (let i = 0; i < d.hubs.length; i++) {
     if (d.staircase && d.staircase.coreHubIdx === i) continue;
     if (d.hubs[i].boundary && d.hubs[i].boundary.length >= 3)
@@ -259,6 +266,9 @@ function draw() {
 
   if (S.showRooms) {
     for (const r of d.rooms) {
+      const isDuct = r.label === "Shaft";
+      ctx.globalAlpha = getCatAlpha(isDuct ? "ducts" : "units");
+
       if (r.fill) {
         ctx.fillStyle = r.fill_opacity
           ? `rgba(${r.fill[0]},${r.fill[1]},${r.fill[2]},${r.fill_opacity})`
@@ -334,6 +344,46 @@ function draw() {
         ctx.lineTo(pCi[0], pCi[1]);
         ctx.lineTo(pDi[0], pDi[1]);
         ctx.stroke();
+      }
+
+      // 🌟 SELECTION HIGHLIGHT (Unit/Room)
+      if (r.id === S.selectedRoomId) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#fff";
+        dPoly(r.boundary, false, true);
+        if (r.balcony) dPoly(r.balcony, false, true);
+        if (r.corner_balcony && r.corner_balcony.length >= 6) {
+          dPoly(r.corner_balcony, false, true);
+        }
+        ctx.restore();
+      }
+
+      // 🧱 INTERNAL WALLS (Transformed from Local coords)
+      if (r.internalWalls && r.internalWalls.length > 0) {
+        ctx.strokeStyle = "rgba(255,255,255,0.85)";
+        ctx.lineWidth = 2.2;
+        ctx.lineCap = "round";
+        
+        // Calculate local origin for this specific room instance
+        let x0 = Infinity, y0 = Infinity;
+        r.boundary.forEach(p => {
+            x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]);
+        });
+        
+        r.internalWalls.forEach(w => {
+            // Translate local [lx, ly] to world [wx, wy]
+            const p1w = [w.p1[0] + x0, w.p1[1] + y0];
+            const p2w = [w.p2[0] + x0, w.p2[1] + y0];
+            const s1 = toScreen(p1w);
+            const s2 = toScreen(p2w);
+            ctx.beginPath();
+            ctx.moveTo(s1[0], s1[1]);
+            ctx.lineTo(s2[0], s2[1]);
+            ctx.stroke();
+        });
       }
     }
 
@@ -448,6 +498,7 @@ function draw() {
 
   // 🏛 RENDER CORES (Multiple Staircases & Elevators)
   if (S.showCores && d.cores && d.cores.length > 0) {
+    ctx.globalAlpha = getCatAlpha("cores");
     d.cores.forEach((core) => {
       // 1. Draw Staircase
       if (core.stair && core.stair.boundary) {
@@ -516,11 +567,34 @@ function draw() {
         ctx.textBaseline = "middle";
         ctx.fillText("🛗", sp[0], sp[1]);
       }
+
+      // 🌟 SELECTION HIGHLIGHT (Core)
+      const stairId = `stair-${d.cores.indexOf(core)}`;
+      const elevId = `elevator-${d.cores.indexOf(core)}`;
+      if (S.selectedRoomId === stairId && core.stair) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#fff";
+        dPoly(core.stair.boundary, false, true);
+        ctx.restore();
+      }
+      if (S.selectedRoomId === elevId && core.elevator) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#fff";
+        dPoly(core.elevator.boundary, false, true);
+        ctx.restore();
+      }
     });
   }
 
   // 🌬 RENDER VENTILATION SHAFTS (منور)
   if (S.showDucts && d.ventShafts) {
+    ctx.globalAlpha = getCatAlpha("ducts");
     d.ventShafts.forEach((v) => {
       ctx.fillStyle = v.fill || "rgba(100, 110, 120, 0.1)";
       dPoly(v.boundary, true, false);
@@ -554,10 +628,23 @@ function draw() {
         ctx.lineTo(c4[0], c4[1]);
         ctx.stroke();
       }
+
+      // 🌟 SELECTION HIGHLIGHT (Vent/Duct)
+      const ventId = `vent-${d.ventShafts.indexOf(v)}`;
+      if (S.selectedRoomId === ventId) {
+        ctx.save();
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#fff";
+        dPoly(v.boundary, false, true);
+        ctx.restore();
+      }
     });
   }
 
   // Spine (Show if toggled)
+  ctx.globalAlpha = 1.0; // Reset for spine/labels
   if (S.showSpine && d.spine && d.spine.length >= 2) {
     ctx.strokeStyle = "#58a6ff";
     ctx.lineWidth = 2.5;
